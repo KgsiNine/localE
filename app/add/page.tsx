@@ -56,6 +56,27 @@ export default function AddPlacePage() {
     )
   }
 
+  if (currentUser.role !== "promoter") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-16">
+          <div className="mx-auto max-w-2xl">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex flex-col gap-2">
+                <span>Only promoters can upload places. Your account is set as a visitor.</span>
+                <span className="text-xs text-muted-foreground">
+                  Contact support to upgrade your account to a promoter.
+                </span>
+              </AlertDescription>
+            </Alert>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />

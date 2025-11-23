@@ -11,6 +11,14 @@ const initialUsers: User[] = [
     email: "demo@example.com",
     username: "DemoUser",
     password: "demo123",
+    role: "promoter",
+  },
+  {
+    id: "2",
+    email: "visitor@example.com",
+    username: "VisitorDemo",
+    password: "demo123",
+    role: "visitor",
   },
 ]
 

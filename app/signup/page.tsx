@@ -19,6 +19,7 @@ export default function SignupPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [role, setRole] = useState<"promoter" | "visitor">("visitor")
   const [error, setError] = useState("")
   const { signup } = useAuth()
   const router = useRouter()
@@ -42,7 +43,7 @@ export default function SignupPage() {
       return
     }
 
-    const success = signup(email, password, username)
+    const success = signup(email, password, username, role)
 
     if (success) {
       router.push("/")
@@ -112,6 +113,46 @@ export default function SignupPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Account Type</Label>
+                  <div className="space-y-2">
+                    <label
+                      className="flex items-center gap-2 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                      onClick={() => setRole("promoter")}
+                    >
+                      <input
+                        type="radio"
+                        name="role"
+                        value="promoter"
+                        checked={role === "promoter"}
+                        onChange={(e) => setRole(e.target.value as "promoter" | "visitor")}
+                        className="cursor-pointer"
+                      />
+                      <div>
+                        <div className="font-medium">Promoter</div>
+                        <div className="text-xs text-muted-foreground">Upload and manage places</div>
+                      </div>
+                    </label>
+                    <label
+                      className="flex items-center gap-2 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors"
+                      onClick={() => setRole("visitor")}
+                    >
+                      <input
+                        type="radio"
+                        name="role"
+                        value="visitor"
+                        checked={role === "visitor"}
+                        onChange={(e) => setRole(e.target.value as "promoter" | "visitor")}
+                        className="cursor-pointer"
+                      />
+                      <div>
+                        <div className="font-medium">Visitor</div>
+                        <div className="text-xs text-muted-foreground">Discover places and write reviews</div>
+                      </div>
+                    </label>
+                  </div>
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-4">
