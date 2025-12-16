@@ -5,22 +5,29 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { ReviewSection } from "@/components/features/reviews/review-section"
+import { BookingCard } from "@/components/features/booking/booking-card" 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPlaceById } from "@/lib/storage"
+import { useAuth } from "@/hooks/use-auth"
 import type { Place } from "@/lib/types"
 import { MapPin, Star, ArrowLeft } from "lucide-react"
 
 export default function PlaceDetailPage() {
   const params = useParams()
+  const { currentUser } = useAuth()
   const [place, setPlace] = useState<Place | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
+  const loadPlace = () => {
     const id = params.id as string
     const foundPlace = getPlaceById(id)
     setPlace(foundPlace || null)
+  }
+
+  useEffect(() => {
+    loadPlace()
     setIsLoading(false)
   }, [params.id])
 
@@ -108,6 +115,36 @@ export default function PlaceDetailPage() {
           </div>
 
           <div className="space-y-6">
+            {place?.packages?.length > 0 && currentUser?.role === "visitor" && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Available Packages</h3>
+                {place.packages.map((pkg) => (
+                  <BookingCard key={pkg.id} pkg={pkg} place={place} user={currentUser} onBookingComplete={loadPlace} />
+                ))}
+              </div>
+            )}
+
+            {place?.packages?.length > 0 && currentUser?.role === "promoter" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Booking Packages</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {place.packages.map((pkg) => (
+                    <div key={pkg.id} className="p-3 border border-border rounded-lg space-y-1">
+                      <h4 className="font-medium">{pkg.name}</h4>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p>
+                          ${pkg.price} · {pkg.duration} min
+                        </p>
+                        <p>{pkg.availableSlots} slots available</p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle>Location Details</CardTitle>

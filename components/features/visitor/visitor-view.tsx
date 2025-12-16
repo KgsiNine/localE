@@ -4,6 +4,7 @@ import { useState } from "react"
 import type { Place } from "@/lib/types"
 import { PlaceList } from "@/components/features/places/place-list"
 import { SectionTitle } from "@/components/features/places/section-title"
+import { CategorySection } from "./category-section"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -30,14 +31,14 @@ export function VisitorView({ allPlaces }: VisitorViewProps) {
   })
 
   const getPlacesByCategory = (category: string) => {
-    return allPlaces.filter((p) => p.category === category).sort(() => Math.random() - 0.5)
+    return allPlaces.filter((p) => p.category === category)
   }
 
   const getLatestPlaces = () => {
     return [...allPlaces]
       .sort((a, b) => {
-        const aDate = Math.max(...[a.uploadedAt || 0, ...a.reviews.map((r) => r.date || 0)])
-        const bDate = Math.max(...[b.uploadedAt || 0, ...b.reviews.map((r) => r.date || 0)])
+        const aDate = Math.max(...[a?.uploadedAt || 0, ...a.reviews.map((r) => r.date || 0)])
+        const bDate = Math.max(...[b?.uploadedAt || 0, ...b.reviews.map((r) => r.date || 0)])
         return bDate - aDate
       })
       .slice(0, 6)
@@ -154,13 +155,7 @@ export function VisitorView({ allPlaces }: VisitorViewProps) {
           {categories.map((category) => {
             const categoryPlaces = getPlacesByCategory(category)
             return categoryPlaces.length > 0 ? (
-              <div key={category}>
-                <SectionTitle
-                  title={`📍 ${category}s`}
-                  subtitle={`Explore ${categoryPlaces.length} ${category.toLowerCase()}${categoryPlaces.length !== 1 ? "s" : ""}`}
-                />
-                <PlaceList places={categoryPlaces} />
-              </div>
+              <CategorySection key={category} category={category} places={categoryPlaces} />
             ) : null
           })}
         </div>

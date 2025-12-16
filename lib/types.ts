@@ -7,6 +7,15 @@ export interface Review {
   date: number // timestamp
 }
 
+export interface BookingPackage {
+  id: string
+  name: string
+  description: string
+  price: number
+  duration: number // in minutes
+  availableSlots: number
+}
+
 export interface Place {
   id: string
   name: string
@@ -17,6 +26,23 @@ export interface Place {
   longitude: number
   uploaderId: string
   reviews: Review[]
+  packages: BookingPackage[]
+}
+
+export interface Booking {
+  id: string
+  packageId: string
+  packageName: string
+  placeId: string
+  placeName: string
+  visitorId: string
+  visitorName: string
+  promoterId: string
+  price: number
+  duration: number
+  bookingDate: number // timestamp when booking was made
+  scheduledDate: string // date string for the scheduled visit
+  status: "pending" | "confirmed" | "cancelled"
 }
 
 export interface User {

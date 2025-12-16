@@ -1,8 +1,9 @@
-import type { User, Place } from "./types"
+import type { User, Place, Booking } from "./types"
 
 const USERS_KEY = "local_explorer_users"
 const PLACES_KEY = "local_explorer_places"
 const CURRENT_USER_KEY = "local_explorer_current_user"
+const BOOKINGS_KEY = "local_explorer_bookings"
 
 // Initial seed data
 const initialUsers: User[] = [
@@ -33,6 +34,24 @@ const initialPlaces: Place[] = [
     latitude: 40.7128,
     longitude: -74.006,
     uploaderId: "1",
+    packages: [
+      {
+        id: "pkg1",
+        name: "Dinner for Two",
+        description: "Romantic 3-course meal with wine pairing",
+        price: 120,
+        duration: 120,
+        availableSlots: 10,
+      },
+      {
+        id: "pkg2",
+        name: "Family Feast",
+        description: "4-course meal for up to 6 people",
+        price: 250,
+        duration: 150,
+        availableSlots: 5,
+      },
+    ],
     reviews: [
       {
         id: "r1",
@@ -54,6 +73,16 @@ const initialPlaces: Place[] = [
     latitude: 40.7829,
     longitude: -73.9654,
     uploaderId: "1",
+    packages: [
+      {
+        id: "pkg3",
+        name: "Guided Nature Walk",
+        description: "Explore the park with an expert naturalist guide",
+        price: 25,
+        duration: 90,
+        availableSlots: 15,
+      },
+    ],
     reviews: [
       {
         id: "r2",
@@ -74,6 +103,16 @@ const initialPlaces: Place[] = [
     latitude: 40.7614,
     longitude: -73.9776,
     uploaderId: "1",
+    packages: [
+      {
+        id: "pkg4",
+        name: "Premium Tour",
+        description: "VIP guided tour with curator insights",
+        price: 45,
+        duration: 60,
+        availableSlots: 8,
+      },
+    ],
     reviews: [],
   },
   {
@@ -85,6 +124,7 @@ const initialPlaces: Place[] = [
     latitude: 40.7489,
     longitude: -73.968,
     uploaderId: "1",
+    packages: [],
     reviews: [
       {
         id: "r3",
@@ -108,6 +148,10 @@ export function initializeStorage() {
 
   if (!localStorage.getItem(PLACES_KEY)) {
     localStorage.setItem(PLACES_KEY, JSON.stringify(initialPlaces))
+  }
+
+  if (!localStorage.getItem(BOOKINGS_KEY)) {
+    localStorage.setItem(BOOKINGS_KEY, JSON.stringify([]))
   }
 }
 
@@ -174,5 +218,40 @@ export function setCurrentUser(user: User | null) {
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user))
   } else {
     localStorage.removeItem(CURRENT_USER_KEY)
+  }
+}
+
+// Bookings
+export function getBookings(): Booking[] {
+  if (typeof window === "undefined") return []
+  const data = localStorage.getItem(BOOKINGS_KEY)
+  return data ? JSON.parse(data) : []
+}
+
+export function saveBookings(bookings: Booking[]) {
+  if (typeof window === "undefined") return
+  localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings))
+}
+
+export function addBooking(booking: Booking) {
+  const bookings = getBookings()
+  bookings.push(booking)
+  saveBookings(bookings)
+}
+
+export function getBookingsByVisitor(visitorId: string): Booking[] {
+  return getBookings().filter((b) => b.visitorId === visitorId)
+}
+
+export function getBookingsByPromoter(promoterId: string): Booking[] {
+  return getBookings().filter((b) => b.promoterId === promoterId)
+}
+
+export function updateBooking(updatedBooking: Booking) {
+  const bookings = getBookings()
+  const index = bookings.findIndex((b) => b.id === updatedBooking.id)
+  if (index !== -1) {
+    bookings[index] = updatedBooking
+    saveBookings(bookings)
   }
 }
