@@ -39,8 +39,6 @@ export function PlaceForm({ userId }: PlaceFormProps) {
     description: "",
     category: "Restaurant" as Place["category"],
     address: "",
-    latitude: "",
-    longitude: "",
     image: "",
   });
   const [rooms, setRooms] = useState<HotelRoom[]>([]);
@@ -70,32 +68,8 @@ export function PlaceForm({ userId }: PlaceFormProps) {
     setError("");
 
     // Validation
-    if (
-      !formData.name ||
-      !formData.description ||
-      !formData.address ||
-      !formData.latitude ||
-      !formData.longitude
-    ) {
+    if (!formData.name || !formData.description || !formData.address) {
       setError("Please fill in all fields");
-      return;
-    }
-
-    const lat = Number.parseFloat(formData.latitude);
-    const lng = Number.parseFloat(formData.longitude);
-
-    if (isNaN(lat) || isNaN(lng)) {
-      setError("Latitude and longitude must be valid numbers");
-      return;
-    }
-
-    if (lat < -90 || lat > 90) {
-      setError("Latitude must be between -90 and 90");
-      return;
-    }
-
-    if (lng < -180 || lng > 180) {
-      setError("Longitude must be between -180 and 180");
       return;
     }
 
@@ -105,8 +79,8 @@ export function PlaceForm({ userId }: PlaceFormProps) {
       description: formData.description,
       category: formData.category,
       address: formData.address,
-      latitude: lat,
-      longitude: lng,
+      latitude: 0,
+      longitude: 0,
       uploaderId: userId,
       image: formData.image || undefined,
       reviews: [],
@@ -240,34 +214,6 @@ export function PlaceForm({ userId }: PlaceFormProps) {
                 setFormData({ ...formData, address: e.target.value })
               }
             />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="latitude">Latitude *</Label>
-              <Input
-                id="latitude"
-                type="text"
-                placeholder="e.g., 40.7128"
-                value={formData.latitude}
-                onChange={(e) =>
-                  setFormData({ ...formData, latitude: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="longitude">Longitude *</Label>
-              <Input
-                id="longitude"
-                type="text"
-                placeholder="e.g., -74.0060"
-                value={formData.longitude}
-                onChange={(e) =>
-                  setFormData({ ...formData, longitude: e.target.value })
-                }
-              />
-            </div>
           </div>
 
           {/* Rooms management for Hotel category */}

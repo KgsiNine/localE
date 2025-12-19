@@ -1,34 +1,44 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import type { Place } from "@/lib/types"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Star, MapPin, Image as ImageIcon } from "lucide-react"
-import Image from "next/image"
-import { useAuth } from "@/hooks/use-auth"
+import Link from "next/link";
+import type { Place } from "@/lib/types";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Star, MapPin, Image as ImageIcon } from "lucide-react";
+import Image from "next/image";
+import { useAuth } from "@/hooks/use-auth";
 
 interface PlaceCardProps {
-  place: Place
+  place: Place;
 }
 
 function calculateAverageRating(place: Place): number {
-  if (place.reviews.length === 0) return 0
-  const sum = place.reviews.reduce((acc, review) => acc + review.rating, 0)
-  return sum / place.reviews.length
+  if (place.reviews.length === 0) return 0;
+  const sum = place.reviews.reduce((acc, review) => acc + review.rating, 0);
+  return sum / place.reviews.length;
 }
 
 export function PlaceCard({ place }: PlaceCardProps) {
-  const { currentUser } = useAuth()
-  const averageRating = calculateAverageRating(place)
+  const { currentUser } = useAuth();
+  const averageRating = calculateAverageRating(place);
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
       {place.image && (
         <div className="relative w-full h-48 overflow-hidden">
           {place.image.startsWith("data:") ? (
-            <img src={place.image} alt={place.name} className="w-full h-full object-cover" />
+            <img
+              src={place.image}
+              alt={place.name}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <Image
               src={place.image}
@@ -61,7 +71,9 @@ export function PlaceCard({ place }: PlaceCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground line-clamp-2">{place.description}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2">
+          {place.description}
+        </p>
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -69,23 +81,29 @@ export function PlaceCard({ place }: PlaceCardProps) {
               <>
                 <div className="flex items-center gap-1">
                   <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                  <span className="text-sm font-medium">{averageRating.toFixed(1)}</span>
+                  <span className="text-sm font-medium">
+                    {averageRating.toFixed(1)}
+                  </span>
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  ({place.reviews.length} {place.reviews.length === 1 ? "review" : "reviews"})
+                  ({place.reviews.length}{" "}
+                  {place.reviews.length === 1 ? "review" : "reviews"})
                 </span>
               </>
             ) : (
-              <span className="text-xs text-muted-foreground">No reviews yet</span>
+              <span className="text-xs text-muted-foreground">
+                No reviews yet
+              </span>
             )}
           </div>
 
           <div className="flex gap-2">
-            {place.category !== "Visitable Place" && currentUser?.role === "visitor" && (
-              <Button asChild size="sm">
-                <Link href={`/book/${place.id}`}>Book Now</Link>
-              </Button>
-            )}
+            {["Hotel", "Mountain", "Restaurant"].includes(place.category) &&
+              currentUser?.role === "visitor" && (
+                <Button asChild size="sm">
+                  <Link href={`/book/${place.id}`}>Book Now</Link>
+                </Button>
+              )}
             <Button asChild size="sm" variant="outline">
               <Link href={`/place/${place.id}`}>Details</Link>
             </Button>
@@ -93,5 +111,5 @@ export function PlaceCard({ place }: PlaceCardProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

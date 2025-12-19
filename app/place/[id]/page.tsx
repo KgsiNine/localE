@@ -214,9 +214,7 @@ export default function PlaceDetailPage() {
                   />
                 )}
 
-                {place.category !== "Visitable Place" &&
-                  place.category !== "Mountain" &&
-                  place.category !== "Hotel" && (
+                {place.category === "Restaurant" && (
                     <Card>
                       <CardHeader>
                         <CardTitle>Ready to Book?</CardTitle>
@@ -237,8 +235,7 @@ export default function PlaceDetailPage() {
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      Restaurant bookings require check-in time and table
-                      number. Click &quot;Book Now&quot; to proceed.
+                      Restaurant bookings require check-in time. Click &quot;Book Now&quot; to proceed.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -264,7 +261,7 @@ export default function PlaceDetailPage() {
                       <Info className="h-4 w-4" />
                       <AlertDescription>
                         Restaurant bookings are made directly by visitors with
-                        check-in time and table number.
+                        check-in time.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -280,21 +277,6 @@ export default function PlaceDetailPage() {
               </Alert>
             )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Location Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Latitude:</span>
-                  <span className="ml-2 font-mono">{place.latitude}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Longitude:</span>
-                  <span className="ml-2 font-mono">{place.longitude}</span>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
