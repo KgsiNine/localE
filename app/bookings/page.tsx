@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,12 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  getBookingsByVisitor,
-  getBookingsByPromoter,
-  updateBooking,
-  getPlaceById,
-} from "@/lib/storage";
+import { RouteGuard } from "@/components/auth/route-guard";
+import { bookingsAPI } from "@/lib/api";
 import type { Booking } from "@/lib/types";
 import {
   Calendar,
@@ -46,9 +41,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default function BookingsPage() {
-  const { currentUser, isLoading: authLoading } = useAuth();
-  const router = useRouter();
+function BookingsPageContent() {
+  const { currentUser } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [allBookings, setAllBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,30 +51,24 @@ export default function BookingsPage() {
   const [sortBy, setSortBy] = useState<string>("newest");
 
   useEffect(() => {
-    // Wait for auth to finish loading
-    if (authLoading) {
-      return;
-    }
-
-    // Check if user is logged in after auth has loaded
     if (!currentUser) {
-      router.push("/login");
       return;
     }
 
-    const loadBookings = () => {
-      const userBookings =
-        currentUser.role === "visitor"
-          ? getBookingsByVisitor(currentUser.id)
-          : getBookingsByPromoter(currentUser.id);
-
-      setAllBookings(userBookings);
-      setBookings(userBookings.sort((a, b) => b.bookingDate - a.bookingDate));
-      setIsLoading(false);
+    const loadBookings = async () => {
+      try {
+        const userBookings = await bookingsAPI.getAllBookings();
+        setAllBookings(userBookings);
+        setBookings(userBookings.sort((a, b) => b.bookingDate - a.bookingDate));
+      } catch (error) {
+        console.error("Failed to load bookings:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadBookings();
-  }, [currentUser, router, authLoading]);
+  }, [currentUser]);
 
   // Filter and sort bookings
   useEffect(() => {
@@ -128,17 +116,22 @@ export default function BookingsPage() {
     setBookings(filtered);
   }, [allBookings, searchQuery, statusFilter, sortBy]);
 
-  const handleStatusChange = (
+  const handleStatusChange = async (
     booking: Booking,
     newStatus: Booking["status"]
   ) => {
-    const updatedBooking = { ...booking, status: newStatus };
-    updateBooking(updatedBooking);
-    const updated = allBookings.map((b) =>
-      b.id === booking.id ? updatedBooking : b
-    );
-    setAllBookings(updated);
-    setBookings(updated);
+    try {
+      const updatedBooking = await bookingsAPI.updateBooking(booking.id, {
+        status: newStatus,
+      });
+      const updated = allBookings.map((b) =>
+        b.id === booking.id ? updatedBooking : b
+      );
+      setAllBookings(updated);
+      setBookings(updated);
+    } catch (error) {
+      console.error("Failed to update booking:", error);
+    }
   };
 
   // Calculate statistics for promoters
@@ -162,7 +155,7 @@ export default function BookingsPage() {
 
   const stats = getBookingStats();
 
-  if (authLoading || isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -556,5 +549,13 @@ export default function BookingsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function BookingsPage() {
+  return (
+    <RouteGuard requireAuth={true}>
+      <BookingsPageContent />
+    </RouteGuard>
   );
 }

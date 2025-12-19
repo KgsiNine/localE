@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Clock, Calendar, AlertCircle } from "lucide-react";
-import { addBooking } from "@/lib/storage";
-import type { Place, User, Booking } from "@/lib/types";
+import { bookingsAPI } from "@/lib/api";
+import type { Place, User } from "@/lib/types";
 
 interface RestaurantBookingFormProps {
   place: Place;
@@ -53,7 +53,7 @@ export function RestaurantBookingForm({
     );
   }
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     setError("");
 
     if (!scheduledDate) {
@@ -84,28 +84,26 @@ export function RestaurantBookingForm({
 
     setIsBooking(true);
 
-    const booking: Booking = {
-      id: `book_${Date.now()}`,
-      placeId: place.id,
-      placeName: place.name,
-      visitorId: user.id,
-      visitorName: user.username,
-      promoterId: place.uploaderId,
-      price: 0, // Restaurant bookings don't have a fixed price from packages
-      duration: 120, // Default 2 hours for restaurant bookings
-      bookingDate: Date.now(),
-      scheduledDate,
-      status: "pending",
-      checkInTime,
-    };
+    try {
+      await bookingsAPI.createBooking({
+        placeId: place.id,
+        price: 0, // Restaurant bookings don't have a fixed price from packages
+        duration: 120, // Default 2 hours for restaurant bookings
+        scheduledDate,
+        checkInTime,
+      });
 
-    addBooking(booking);
-
-    setSuccess(true);
-    setIsBooking(false);
-    setTimeout(() => {
-      onBookingComplete();
-    }, 2000);
+      setSuccess(true);
+      setIsBooking(false);
+      setTimeout(() => {
+        onBookingComplete();
+      }, 2000);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to create booking"
+      );
+      setIsBooking(false);
+    }
   };
 
   return (

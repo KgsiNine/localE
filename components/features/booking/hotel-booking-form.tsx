@@ -14,8 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar, AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { addBooking } from "@/lib/storage";
-import type { Place, User, Booking } from "@/lib/types";
+import { bookingsAPI } from "@/lib/api";
+import type { Place, User } from "@/lib/types";
 
 interface HotelBookingFormProps {
   place: Place;
@@ -55,7 +55,7 @@ export function HotelBookingForm({
     );
   }
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     setError("");
 
     if (!checkInDate) {
@@ -96,30 +96,28 @@ export function HotelBookingForm({
 
     setIsBooking(true);
 
-    const booking: Booking = {
-      id: `book_${Date.now()}`,
-      placeId: place.id,
-      placeName: place.name,
-      visitorId: user.id,
-      visitorName: user.username,
-      promoterId: place.uploaderId,
-      price: 0, // Direct bookings don't have a fixed price from packages
-      duration,
-      bookingDate: Date.now(),
-      scheduledDate: checkInDate,
-      status: "pending",
-      checkInDate,
-      checkOutDate,
-      selectedRoomIds,
-    };
+    try {
+      await bookingsAPI.createBooking({
+        placeId: place.id,
+        price: 0, // Direct bookings don't have a fixed price from packages
+        duration,
+        scheduledDate: checkInDate,
+        checkInDate,
+        checkOutDate,
+        selectedRoomIds,
+      });
 
-    addBooking(booking);
-
-    setSuccess(true);
-    setIsBooking(false);
-    setTimeout(() => {
-      onBookingComplete();
-    }, 2000);
+      setSuccess(true);
+      setIsBooking(false);
+      setTimeout(() => {
+        onBookingComplete();
+      }, 2000);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to create booking"
+      );
+      setIsBooking(false);
+    }
   };
 
   return (
@@ -172,7 +170,10 @@ export function HotelBookingForm({
                 <>
                   <div className="space-y-2 border border-border rounded-lg p-4">
                     {place.rooms.map((room) => (
-                      <div key={room.id} className="flex items-center space-x-2">
+                      <div
+                        key={room.id}
+                        className="flex items-center space-x-2"
+                      >
                         <Checkbox
                           id={`room-${room.id}`}
                           checked={selectedRoomIds.includes(room.id)}
@@ -181,14 +182,18 @@ export function HotelBookingForm({
                             if (checked) {
                               setSelectedRoomIds([...selectedRoomIds, room.id]);
                             } else {
-                              setSelectedRoomIds(selectedRoomIds.filter((id) => id !== room.id));
+                              setSelectedRoomIds(
+                                selectedRoomIds.filter((id) => id !== room.id)
+                              );
                             }
                           }}
                         />
                         <Label
                           htmlFor={`room-${room.id}`}
                           className={`text-sm font-normal cursor-pointer ${
-                            !room.isAvailable ? "text-muted-foreground line-through" : ""
+                            !room.isAvailable
+                              ? "text-muted-foreground line-through"
+                              : ""
                           }`}
                         >
                           {room.name}
@@ -205,7 +210,8 @@ export function HotelBookingForm({
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    No rooms available for booking. Please contact the hotel directly.
+                    No rooms available for booking. Please contact the hotel
+                    directly.
                   </AlertDescription>
                 </Alert>
               )}
@@ -237,4 +243,3 @@ export function HotelBookingForm({
     </Card>
   );
 }
-

@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Place } from "@/lib/types";
 import {
   Card,
@@ -11,12 +13,24 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, MapPin, Image as ImageIcon } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Star, MapPin, Image as ImageIcon, Edit, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/use-auth";
+import { placesAPI } from "@/lib/api";
 
 interface PlaceCardProps {
   place: Place;
+  onDelete?: () => void; // Callback to refresh the list after deletion
 }
 
 function calculateAverageRating(place: Place): number {
@@ -25,9 +39,46 @@ function calculateAverageRating(place: Place): number {
   return sum / place.reviews.length;
 }
 
-export function PlaceCard({ place }: PlaceCardProps) {
+export function PlaceCard({ place, onDelete }: PlaceCardProps) {
   const { currentUser } = useAuth();
+  const router = useRouter();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const averageRating = calculateAverageRating(place);
+
+  // Ensure we have a valid ID (normalized from _id)
+  const placeId =
+    place.id || (place as any)._id?.toString() || (place as any)._id;
+
+  // Check if current user owns this place
+  const uploaderId =
+    typeof place.uploaderId === "object" &&
+    place.uploaderId !== null &&
+    "_id" in place.uploaderId
+      ? (place.uploaderId as any)._id.toString()
+      : place.uploaderId.toString();
+  const isOwner =
+    currentUser?.role === "promoter" && currentUser.id === uploaderId;
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await placesAPI.deletePlace(placeId);
+      // Call the callback to refresh the list
+      if (onDelete) {
+        onDelete();
+      } else {
+        // Fallback: reload the page
+        router.refresh();
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Failed to delete place:", error);
+      alert("Failed to delete place. Please try again.");
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
@@ -97,17 +148,62 @@ export function PlaceCard({ place }: PlaceCardProps) {
             )}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {isOwner && (
+              <>
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/edit/${placeId}`}>
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Link>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </>
+            )}
             {["Hotel", "Mountain", "Restaurant"].includes(place.category) &&
               currentUser?.role === "visitor" && (
                 <Button asChild size="sm">
-                  <Link href={`/book/${place.id}`}>Book Now</Link>
+                  <Link href={`/book/${placeId}`}>Book Now</Link>
                 </Button>
               )}
             <Button asChild size="sm" variant="outline">
-              <Link href={`/place/${place.id}`}>Details</Link>
+              <Link href={`/place/${placeId}`}>Details</Link>
             </Button>
           </div>
+
+          <AlertDialog
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete "{place.name}". This action
+                  cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardContent>
     </Card>

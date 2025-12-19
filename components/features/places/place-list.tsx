@@ -3,9 +3,10 @@ import { PlaceCard } from "./place-card"
 
 interface PlaceListProps {
   places: Place[]
+  onPlaceDeleted?: () => void
 }
 
-export function PlaceList({ places }: PlaceListProps) {
+export function PlaceList({ places, onPlaceDeleted }: PlaceListProps) {
   if (places.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -17,9 +18,10 @@ export function PlaceList({ places }: PlaceListProps) {
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {places.map((place) => (
-        <PlaceCard key={place.id} place={place} />
-      ))}
+      {places.map((place) => {
+        const placeId = place.id || (place as any)._id?.toString() || (place as any)._id;
+        return <PlaceCard key={placeId} place={place} onDelete={onPlaceDeleted} />;
+      })}
     </div>
   )
 }

@@ -2,71 +2,75 @@
 
 import { useState, useEffect } from "react";
 import type { User } from "@/lib/types";
-import {
-  getCurrentUser,
-  setCurrentUser,
-  getUsers,
-  addUser,
-  initializeStorage,
-} from "@/lib/storage";
+import { authAPI } from "@/lib/api";
 
 export function useAuth() {
   const [currentUser, setCurrentUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    initializeStorage();
-    const user = getCurrentUser();
-    setCurrentUserState(user);
-    setIsLoading(false);
+    // Try to get stored user first
+    const storedUser = authAPI.getStoredUser();
+    if (storedUser) {
+      // Set user optimistically but keep loading until verification
+      setCurrentUserState(storedUser);
+      // Verify token is still valid
+      authAPI
+        .getCurrentUser()
+        .then((user) => {
+          setCurrentUserState(user);
+          setIsLoading(false);
+        })
+        .catch(() => {
+          // Token invalid or user not authenticated, clear user
+          setCurrentUserState(null);
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
-  const login = (email: string, password: string): boolean => {
-    const users = getUsers();
-    const user = users.find(
-      (u) => u.email === email && u.password === password
-    );
-
-    if (user) {
-      const userWithoutPassword = { ...user };
-      setCurrentUser(userWithoutPassword);
-      setCurrentUserState(userWithoutPassword);
-      return true;
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { user } = await authAPI.login(email, password);
+      setCurrentUserState(user);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Login failed",
+      };
     }
-
-    return false;
   };
 
-  const signup = (
+  const signup = async (
     email: string,
     password: string,
     username: string,
     role: "promoter" | "visitor" = "visitor"
-  ): boolean => {
-    const users = getUsers();
-
-    // Check if user already exists
-    if (users.some((u) => u.email === email)) {
-      return false;
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { user } = await authAPI.signup(email, password, username, role);
+      setCurrentUserState(user);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Signup failed",
+      };
     }
-
-    const newUser: User = {
-      id: Date.now().toString(),
-      email,
-      username,
-      password,
-      role,
-    };
-
-    addUser(newUser);
-    const userWithoutPassword = { ...newUser };
-    setCurrentUser(userWithoutPassword);
-    setCurrentUserState(userWithoutPassword);
-    return true;
   };
 
-  const logout = () => {
-    setCurrentUser(null);
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      // Ignore errors on logout
+    }
     setCurrentUserState(null);
   };
 

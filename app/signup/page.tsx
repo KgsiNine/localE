@@ -24,7 +24,7 @@ export default function SignupPage() {
   const { signup } = useAuth()
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
@@ -43,12 +43,12 @@ export default function SignupPage() {
       return
     }
 
-    const success = signup(email, password, username, role)
+    const result = await signup(email, password, username, role)
 
-    if (success) {
+    if (result.success) {
       router.push("/")
     } else {
-      setError("Email already exists")
+      setError(result.error || "Signup failed. Email may already exist.")
     }
   }
 
