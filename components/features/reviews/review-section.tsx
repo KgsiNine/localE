@@ -5,7 +5,7 @@ import Link from "next/link"
 import { ReviewForm } from "./review-form"
 import { ReviewList } from "./review-list"
 import { useAuth } from "@/hooks/use-auth"
-import { updatePlace } from "@/lib/storage"
+import { reviewsAPI } from "@/lib/api"
 import type { Place, Review } from "@/lib/types"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -20,23 +20,20 @@ export function ReviewSection({ place, onReviewAdded }: ReviewSectionProps) {
   const { currentUser } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleReviewSubmit = (reviewData: Omit<Review, "id" | "date">) => {
+  const handleReviewSubmit = async (reviewData: Omit<Review, "id" | "date">) => {
     setIsSubmitting(true)
 
-    const newReview: Review = {
-      ...reviewData,
-      id: Date.now().toString(),
-      date: Date.now(),
+    try {
+      const updatedPlace = await reviewsAPI.addReview(place.id, {
+        rating: reviewData.rating,
+        comment: reviewData.comment,
+      })
+      onReviewAdded(updatedPlace)
+    } catch (error) {
+      console.error("Failed to add review:", error)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    const updatedPlace: Place = {
-      ...place,
-      reviews: [...place.reviews, newReview],
-    }
-
-    updatePlace(updatedPlace)
-    onReviewAdded(updatedPlace)
-    setIsSubmitting(false)
   }
 
   return (

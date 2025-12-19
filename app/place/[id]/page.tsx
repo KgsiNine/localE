@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { getPlaceById } from "@/lib/storage";
+import { placesAPI } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import type { Place } from "@/lib/types";
 import { MapPin, Star, ArrowLeft, Info } from "lucide-react";
@@ -25,25 +25,66 @@ export default function PlaceDetailPage() {
   const [place, setPlace] = useState<Place | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadPlace = () => {
-    const id = params.id as string;
-    const foundPlace = getPlaceById(id);
-    setPlace(foundPlace || null);
+  const loadPlace = async () => {
+    try {
+      const id = params.id as string;
+      console.log("Loading place with ID:", id, "Current user:", currentUser);
+      if (!id) {
+        console.error("No ID provided");
+        setPlace(null);
+        setIsLoading(false);
+        return;
+      }
+      const foundPlace = await placesAPI.getPlaceById(id);
+      console.log("Found place:", foundPlace);
+      if (foundPlace) {
+        // Ensure the place has an id field (normalized from _id)
+        if (!foundPlace.id && (foundPlace as any)._id) {
+          (foundPlace as any).id = (foundPlace as any)._id.toString();
+        }
+        setPlace(foundPlace);
+      } else {
+        console.error("Place not found or missing id field");
+        setPlace(null);
+      }
+    } catch (error: any) {
+      console.error("Failed to load place:", error);
+      // Check if it's a 403 (access denied) or 404 (not found)
+      if (
+        error.message?.includes("Access denied") ||
+        error.message?.includes("403")
+      ) {
+        // For promoters, redirect to home if they don't own the place
+        if (currentUser?.role === "promoter") {
+          router.push("/");
+          return;
+        }
+      }
+      setPlace(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
-    loadPlace();
-    setIsLoading(false);
-  }, [params.id]);
+    if (params.id) {
+      loadPlace();
+    }
+  }, [params.id, currentUser]);
 
   // Prevent promoters from viewing places they didn't create
   useEffect(() => {
-    if (
-      place &&
-      currentUser?.role === "promoter" &&
-      currentUser.id !== place.uploaderId
-    ) {
-      router.push("/");
+    if (place && currentUser?.role === "promoter") {
+      const uploaderId =
+        typeof place.uploaderId === "object" &&
+        place.uploaderId !== null &&
+        "_id" in place.uploaderId
+          ? (place.uploaderId as any)._id.toString()
+          : place.uploaderId.toString();
+
+      if (currentUser.id !== uploaderId) {
+        router.push("/");
+      }
     }
   }, [place, currentUser, router]);
 
@@ -80,7 +121,14 @@ export default function PlaceDetailPage() {
   }
 
   // Show access denied for promoters viewing places they didn't create
-  if (currentUser?.role === "promoter" && currentUser.id !== place.uploaderId) {
+  const uploaderId =
+    typeof place.uploaderId === "object" &&
+    place.uploaderId !== null &&
+    "_id" in place.uploaderId
+      ? (place.uploaderId as any)._id.toString()
+      : place.uploaderId.toString();
+
+  if (currentUser?.role === "promoter" && currentUser.id !== uploaderId) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -214,31 +262,29 @@ export default function PlaceDetailPage() {
                   />
                 )}
 
-                {place.category !== "Visitable Place" &&
-                  place.category !== "Mountain" &&
-                  place.category !== "Hotel" && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Ready to Book?</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Button asChild className="w-full" size="lg">
-                          <Link href={`/book/${place.id}`}>Book Now</Link>
-                        </Button>
-                        <p className="text-sm text-muted-foreground mt-2 text-center">
-                          Complete your booking on our dedicated booking page
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
+                {place.category === "Restaurant" && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Ready to Book?</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Button asChild className="w-full" size="lg">
+                        <Link href={`/book/${place.id}`}>Book Now</Link>
+                      </Button>
+                      <p className="text-sm text-muted-foreground mt-2 text-center">
+                        Complete your booking on our dedicated booking page
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Quick preview of booking options */}
                 {place.category === "Restaurant" && (
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      Restaurant bookings require check-in time and table
-                      number. Click &quot;Book Now&quot; to proceed.
+                      Restaurant bookings require check-in time. Click
+                      &quot;Book Now&quot; to proceed.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -257,14 +303,14 @@ export default function PlaceDetailPage() {
 
             {/* Promoter view */}
             {currentUser?.role === "promoter" &&
-              currentUser.id === place.uploaderId && (
+              currentUser.id === uploaderId && (
                 <>
                   {place.category === "Restaurant" && (
                     <Alert>
                       <Info className="h-4 w-4" />
                       <AlertDescription>
                         Restaurant bookings are made directly by visitors with
-                        check-in time and table number.
+                        check-in time.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -279,22 +325,6 @@ export default function PlaceDetailPage() {
                 </AlertDescription>
               </Alert>
             )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Location Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Latitude:</span>
-                  <span className="ml-2 font-mono">{place.latitude}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Longitude:</span>
-                  <span className="ml-2 font-mono">{place.longitude}</span>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>

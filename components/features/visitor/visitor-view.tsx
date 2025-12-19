@@ -44,7 +44,9 @@ export function VisitorView({
     // Handle "bookable" category filter (Hotel and Mountain)
     if (categoryFilter === "bookable") {
       const matchesCategory =
-        place.category === "Hotel" || place.category === "Mountain";
+        place.category === "Hotel" ||
+        place.category === "Mountain" ||
+        place.category === "Restaurant";
       return matchesSearch && matchesCategory;
     }
 
@@ -131,7 +133,7 @@ export function VisitorView({
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="bookable">
-                  Bookable (Hotel & Mountain)
+                  Bookable (Hotel & Mountain & Restaurant)
                 </SelectItem>
                 <SelectItem value="Restaurant">Restaurant</SelectItem>
                 <SelectItem value="Hotel">Hotel</SelectItem>

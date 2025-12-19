@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,28 +25,43 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Plus, X, Image as ImageIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { addPlace } from "@/lib/storage";
+import { placesAPI } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
 import type { Place, HotelRoom } from "@/lib/types";
 
 interface PlaceFormProps {
-  userId: string;
+  userId?: string;
+  place?: Place; // For editing existing place
 }
 
-export function PlaceForm({ userId }: PlaceFormProps) {
+export function PlaceForm({
+  userId: propUserId,
+  place: existingPlace,
+}: PlaceFormProps) {
+  const { currentUser } = useAuth();
+  const userId = propUserId || currentUser?.id;
   const router = useRouter();
+  const isEditing = !!existingPlace;
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    category: "Restaurant" as Place["category"],
-    address: "",
-    latitude: "",
-    longitude: "",
-    image: "",
+    name: existingPlace?.name || "",
+    description: existingPlace?.description || "",
+    category: (existingPlace?.category || "Restaurant") as Place["category"],
+    address: existingPlace?.address || "",
+    image: existingPlace?.image || "",
   });
-  const [rooms, setRooms] = useState<HotelRoom[]>([]);
+  const [rooms, setRooms] = useState<HotelRoom[]>(existingPlace?.rooms || []);
   const [newRoomName, setNewRoomName] = useState("");
   const [error, setError] = useState("");
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>(
+    existingPlace?.image || ""
+  );
+
+  // Set image preview when editing
+  useEffect(() => {
+    if (existingPlace?.image) {
+      setImagePreview(existingPlace.image);
+    }
+  }, [existingPlace]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,65 +80,76 @@ export function PlaceForm({ userId }: PlaceFormProps) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     // Validation
-    if (
-      !formData.name ||
-      !formData.description ||
-      !formData.address ||
-      !formData.latitude ||
-      !formData.longitude
-    ) {
+    if (!formData.name || !formData.description || !formData.address) {
       setError("Please fill in all fields");
       return;
     }
 
-    const lat = Number.parseFloat(formData.latitude);
-    const lng = Number.parseFloat(formData.longitude);
-
-    if (isNaN(lat) || isNaN(lng)) {
-      setError("Latitude and longitude must be valid numbers");
+    if (!userId) {
+      setError("User not authenticated");
       return;
     }
 
-    if (lat < -90 || lat > 90) {
-      setError("Latitude must be between -90 and 90");
-      return;
+    try {
+      if (isEditing && existingPlace) {
+        // Update existing place
+        const placeId =
+          existingPlace.id ||
+          (existingPlace as any)._id?.toString() ||
+          (existingPlace as any)._id;
+        await placesAPI.updatePlace(placeId, {
+          name: formData.name,
+          description: formData.description,
+          category: formData.category,
+          address: formData.address,
+          latitude: existingPlace.latitude || 0,
+          longitude: existingPlace.longitude || 0,
+          image: formData.image || undefined,
+          ...(formData.category === "Hotel" && rooms.length > 0
+            ? { rooms }
+            : {}),
+        });
+      } else {
+        // Create new place
+        await placesAPI.createPlace({
+          name: formData.name,
+          description: formData.description,
+          category: formData.category,
+          address: formData.address,
+          latitude: 0,
+          longitude: 0,
+          uploaderId: userId,
+          image: formData.image || undefined,
+          ...(formData.category === "Hotel" && rooms.length > 0
+            ? { rooms }
+            : {}),
+        });
+      }
+      // Use router.push with shallow refresh to reload places
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : `Failed to ${isEditing ? "update" : "create"} place`
+      );
     }
-
-    if (lng < -180 || lng > 180) {
-      setError("Longitude must be between -180 and 180");
-      return;
-    }
-
-    const newPlace: Place = {
-      id: Date.now().toString(),
-      name: formData.name,
-      description: formData.description,
-      category: formData.category,
-      address: formData.address,
-      latitude: lat,
-      longitude: lng,
-      uploaderId: userId,
-      image: formData.image || undefined,
-      reviews: [],
-      uploadedAt: Date.now(),
-      ...(formData.category === "Hotel" && rooms.length > 0 ? { rooms } : {}),
-    };
-
-    addPlace(newPlace);
-    router.push("/");
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add a New Place</CardTitle>
+        <CardTitle>{isEditing ? "Edit Place" : "Add a New Place"}</CardTitle>
         <CardDescription>
-          Share a great location with the community
+          {isEditing
+            ? "Update place information"
+            : "Share a great location with the community"}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -242,34 +268,6 @@ export function PlaceForm({ userId }: PlaceFormProps) {
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="latitude">Latitude *</Label>
-              <Input
-                id="latitude"
-                type="text"
-                placeholder="e.g., 40.7128"
-                value={formData.latitude}
-                onChange={(e) =>
-                  setFormData({ ...formData, latitude: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="longitude">Longitude *</Label>
-              <Input
-                id="longitude"
-                type="text"
-                placeholder="e.g., -74.0060"
-                value={formData.longitude}
-                onChange={(e) =>
-                  setFormData({ ...formData, longitude: e.target.value })
-                }
-              />
-            </div>
-          </div>
-
           {/* Rooms management for Hotel category */}
           {formData.category === "Hotel" && (
             <div className="space-y-4 pt-4 border-t border-border">
@@ -374,7 +372,7 @@ export function PlaceForm({ userId }: PlaceFormProps) {
 
           <div className="flex gap-3 pt-4">
             <Button type="submit" className="flex-1">
-              Add Place
+              {isEditing ? "Update Place" : "Add Place"}
             </Button>
             <Button
               type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
@@ -11,54 +11,37 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { getPlaceById, initializeStorage } from "@/lib/storage";
+import { placesAPI } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
+import { RouteGuard } from "@/components/auth/route-guard";
 import type { Place } from "@/lib/types";
 import { MapPin, Star, ArrowLeft, Info, Calendar } from "lucide-react";
 import Image from "next/image";
 
-export default function BookingPage() {
+function BookingPageContent() {
   const params = useParams();
   const router = useRouter();
-  const { currentUser, isLoading: authLoading } = useAuth();
+  const { currentUser } = useAuth();
   const [place, setPlace] = useState<Place | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const hasRedirectedRef = useRef(false);
 
   const placeId = params.placeId as string;
 
   useEffect(() => {
-    // Initialize storage to ensure rooms are added to existing hotel places
-    initializeStorage();
+    const loadPlace = async () => {
+      try {
+        const foundPlace = await placesAPI.getPlaceById(placeId);
+        setPlace(foundPlace);
+      } catch (error) {
+        console.error("Failed to load place:", error);
+        setPlace(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    // Wait for auth to finish loading
-    if (authLoading) {
-      return;
-    }
-
-    // Prevent multiple redirects
-    if (hasRedirectedRef.current) {
-      return;
-    }
-
-    if (!currentUser) {
-      hasRedirectedRef.current = true;
-      router.push(`/login?redirect=/book/${placeId}`);
-      return;
-    }
-
-    // Only visitors can book places
-    if (currentUser.role !== "visitor") {
-      hasRedirectedRef.current = true;
-      router.push(`/place/${placeId}`);
-      return;
-    }
-
-    // Load place data
-    const foundPlace = getPlaceById(placeId);
-    setPlace(foundPlace || null);
-    setIsLoading(false);
-  }, [placeId, currentUser, authLoading]);
+    loadPlace();
+  }, [placeId]);
 
   const handleBookingComplete = () => {
     // Redirect to bookings page after successful booking
@@ -67,7 +50,7 @@ export default function BookingPage() {
     }, 1500);
   };
 
-  if (authLoading || isLoading || hasRedirectedRef.current) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -256,5 +239,13 @@ export default function BookingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <RouteGuard requireAuth={true} requireRole="visitor">
+      <BookingPageContent />
+    </RouteGuard>
   );
 }

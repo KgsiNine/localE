@@ -12,9 +12,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Clock, Calendar, Hash, AlertCircle } from "lucide-react";
-import { addBooking } from "@/lib/storage";
-import type { Place, User, Booking } from "@/lib/types";
+import { Clock, Calendar, AlertCircle } from "lucide-react";
+import { bookingsAPI } from "@/lib/api";
+import type { Place, User } from "@/lib/types";
 
 interface RestaurantBookingFormProps {
   place: Place;
@@ -29,7 +29,6 @@ export function RestaurantBookingForm({
 }: RestaurantBookingFormProps) {
   const [scheduledDate, setScheduledDate] = useState("");
   const [checkInTime, setCheckInTime] = useState("");
-  const [tableNumber, setTableNumber] = useState("");
   const [isBooking, setIsBooking] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -54,7 +53,7 @@ export function RestaurantBookingForm({
     );
   }
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     setError("");
 
     if (!scheduledDate) {
@@ -64,11 +63,6 @@ export function RestaurantBookingForm({
 
     if (!checkInTime) {
       setError("Please select a check-in time");
-      return;
-    }
-
-    if (!tableNumber || tableNumber.trim() === "") {
-      setError("Please enter a table number");
       return;
     }
 
@@ -90,29 +84,26 @@ export function RestaurantBookingForm({
 
     setIsBooking(true);
 
-    const booking: Booking = {
-      id: `book_${Date.now()}`,
-      placeId: place.id,
-      placeName: place.name,
-      visitorId: user.id,
-      visitorName: user.username,
-      promoterId: place.uploaderId,
-      price: 0, // Restaurant bookings don't have a fixed price from packages
-      duration: 120, // Default 2 hours for restaurant bookings
-      bookingDate: Date.now(),
-      scheduledDate,
-      status: "pending",
-      checkInTime,
-      tableNumber: tableNumber.trim(),
-    };
+    try {
+      await bookingsAPI.createBooking({
+        placeId: place.id,
+        price: 0, // Restaurant bookings don't have a fixed price from packages
+        duration: 120, // Default 2 hours for restaurant bookings
+        scheduledDate,
+        checkInTime,
+      });
 
-    addBooking(booking);
-
-    setSuccess(true);
-    setIsBooking(false);
-    setTimeout(() => {
-      onBookingComplete();
-    }, 2000);
+      setSuccess(true);
+      setIsBooking(false);
+      setTimeout(() => {
+        onBookingComplete();
+      }, 2000);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to create booking"
+      );
+      setIsBooking(false);
+    }
   };
 
   return (
@@ -153,20 +144,6 @@ export function RestaurantBookingForm({
               <p className="text-xs text-muted-foreground">
                 Enter time in 24-hour format (e.g., 19:30)
               </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="table-number">Table Number *</Label>
-              <div className="flex items-center gap-2">
-                <Hash className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="table-number"
-                  type="text"
-                  value={tableNumber}
-                  onChange={(e) => setTableNumber(e.target.value)}
-                  placeholder="e.g., Table 5 or T-12"
-                />
-              </div>
             </div>
 
             {error && (

@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar, Hash, AlertCircle } from "lucide-react";
-import { addBooking } from "@/lib/storage";
-import type { Place, User, Booking } from "@/lib/types";
+import { bookingsAPI } from "@/lib/api";
+import type { Place, User } from "@/lib/types";
 
 interface MountainBookingFormProps {
   place: Place;
@@ -54,7 +54,7 @@ export function MountainBookingForm({
     );
   }
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     setError("");
 
     if (!startDate) {
@@ -105,30 +105,28 @@ export function MountainBookingForm({
 
     setIsBooking(true);
 
-    const booking: Booking = {
-      id: `book_${Date.now()}`,
-      placeId: place.id,
-      placeName: place.name,
-      visitorId: user.id,
-      visitorName: user.username,
-      promoterId: place.uploaderId,
-      price: 0, // Direct bookings don't have a fixed price from packages
-      duration,
-      bookingDate: Date.now(),
-      scheduledDate: startDate,
-      status: "pending",
-      startDate,
-      endDate,
-      numberOfSlots: slots,
-    };
+    try {
+      await bookingsAPI.createBooking({
+        placeId: place.id,
+        price: 0, // Direct bookings don't have a fixed price from packages
+        duration,
+        scheduledDate: startDate,
+        startDate,
+        endDate,
+        numberOfSlots: slots,
+      });
 
-    addBooking(booking);
-
-    setSuccess(true);
-    setIsBooking(false);
-    setTimeout(() => {
-      onBookingComplete();
-    }, 2000);
+      setSuccess(true);
+      setIsBooking(false);
+      setTimeout(() => {
+        onBookingComplete();
+      }, 2000);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to create booking"
+      );
+      setIsBooking(false);
+    }
   };
 
   return (

@@ -30,7 +30,7 @@ export default function LoginPage() {
     }
   }, [currentUser, isLoading, router, searchParams])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
@@ -39,13 +39,13 @@ export default function LoginPage() {
       return
     }
 
-    const success = login(email, password)
+    const result = await login(email, password)
 
-    if (success) {
+    if (result.success) {
       const redirect = searchParams.get("redirect")
       router.push(redirect || "/")
     } else {
-      setError("Invalid email or password")
+      setError(result.error || "Invalid email or password")
     }
   }
 
