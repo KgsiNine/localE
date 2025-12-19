@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,8 +18,17 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const { login } = useAuth()
+  const { login, currentUser, isLoading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Check if user is already logged in
+    if (!isLoading && currentUser) {
+      const redirect = searchParams.get("redirect")
+      router.push(redirect || "/")
+    }
+  }, [currentUser, isLoading, router, searchParams])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,7 +42,8 @@ export default function LoginPage() {
     const success = login(email, password)
 
     if (success) {
-      router.push("/")
+      const redirect = searchParams.get("redirect")
+      router.push(redirect || "/")
     } else {
       setError("Invalid email or password")
     }
@@ -63,13 +73,13 @@ export default function LoginPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="demo@example.com"
+                    placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 mt-6">
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
@@ -79,14 +89,8 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
-
-                <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-                  <p className="font-medium mb-1">Demo Account:</p>
-                  <p>Email: demo@example.com</p>
-                  <p>Password: demo123</p>
-                </div>
               </CardContent>
-              <CardFooter className="flex flex-col gap-4">
+              <CardFooter className="flex flex-col gap-4 mt-6">
                 <Button type="submit" className="w-full">
                   Sign In
                 </Button>

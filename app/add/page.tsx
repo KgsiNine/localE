@@ -40,14 +40,18 @@ export default function AddPlacePage() {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-4 py-16">
-          <div className="mx-auto max-w-2xl">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="flex items-center justify-between">
-                <span>Please login to add a place</span>
-                <Button asChild size="sm" variant="outline">
-                  <Link href="/login">Login</Link>
-                </Button>
+          <div className="mx-auto max-w-4xl">
+            <Alert className="p-10 border-2 border-blue-200 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 shadow-xl">
+              <AlertCircle className="h-10 w-10 text-blue-600" />
+              <AlertDescription className="flex flex-col gap-5 ml-4">
+                <span className="text-2xl font-bold text-gray-900">
+                  Please login to add a place
+                </span>
+                <div>
+                  <Button asChild size="lg" className="mt-2">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                </div>
               </AlertDescription>
             </Alert>
           </div>
@@ -61,13 +65,15 @@ export default function AddPlacePage() {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-4 py-16">
-          <div className="mx-auto max-w-2xl">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="flex flex-col gap-2">
-                <span>Only promoters can upload places. Your account is set as a visitor.</span>
-                <span className="text-xs text-muted-foreground">
-                  Contact support to upgrade your account to a promoter.
+          <div className="mx-auto max-w-4xl">
+            <Alert className="p-10 border-2 border-blue-200 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 shadow-xl">
+              <AlertCircle className="h-10 w-10 text-blue-600" />
+              <AlertDescription className="flex flex-col gap-5 ml-4">
+                <span className="text-2xl font-bold text-gray-900">
+                  Only promoters can upload places. Your account is set as a visitor.
+                </span>
+                <span className="text-base text-gray-700 font-medium">
+                  Want to add places? Create a promoter account to get started!
                 </span>
               </AlertDescription>
             </Alert>

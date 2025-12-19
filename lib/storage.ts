@@ -26,7 +26,7 @@ const initialUsers: User[] = [
 const initialPlaces: Place[] = [
   {
     id: "1",
-    name: "The Golden Fork",
+    name: "Mario's Italian Bistro",
     description:
       "A cozy restaurant serving authentic Italian cuisine with a modern twist. Perfect for romantic dinners and family gatherings.",
     category: "Restaurant",
@@ -34,24 +34,7 @@ const initialPlaces: Place[] = [
     latitude: 40.7128,
     longitude: -74.006,
     uploaderId: "1",
-    packages: [
-      {
-        id: "pkg1",
-        name: "Dinner for Two",
-        description: "Romantic 3-course meal with wine pairing",
-        price: 120,
-        duration: 120,
-        availableSlots: 10,
-      },
-      {
-        id: "pkg2",
-        name: "Family Feast",
-        description: "4-course meal for up to 6 people",
-        price: 250,
-        duration: 150,
-        availableSlots: 5,
-      },
-    ],
+    packages: [], // Restaurants use direct booking with check-in time and table number
     reviews: [
       {
         id: "r1",
@@ -62,27 +45,19 @@ const initialPlaces: Place[] = [
         date: Date.now() - 86400000,
       },
     ],
+    uploadedAt: Date.now() - 86400000 * 7,
   },
   {
     id: "2",
     name: "Central Park",
     description:
       "Beautiful urban park with walking trails, playgrounds, and scenic views. Great for picnics and outdoor activities.",
-    category: "Park",
+    category: "Visitable Place",
     address: "456 Park Avenue",
     latitude: 40.7829,
     longitude: -73.9654,
     uploaderId: "1",
-    packages: [
-      {
-        id: "pkg3",
-        name: "Guided Nature Walk",
-        description: "Explore the park with an expert naturalist guide",
-        price: 25,
-        duration: 90,
-        availableSlots: 15,
-      },
-    ],
+    packages: [], // Visitable places cannot be booked
     reviews: [
       {
         id: "r2",
@@ -93,27 +68,20 @@ const initialPlaces: Place[] = [
         date: Date.now() - 172800000,
       },
     ],
+    uploadedAt: Date.now() - 172800000 * 2,
   },
   {
     id: "3",
     name: "Modern Art Museum",
     description: "Contemporary art museum featuring rotating exhibitions from local and international artists.",
-    category: "Museum",
+    category: "Visitable Place",
     address: "789 Culture Boulevard",
     latitude: 40.7614,
     longitude: -73.9776,
     uploaderId: "1",
-    packages: [
-      {
-        id: "pkg4",
-        name: "Premium Tour",
-        description: "VIP guided tour with curator insights",
-        price: 45,
-        duration: 60,
-        availableSlots: 8,
-      },
-    ],
+    packages: [], // Visitable places cannot be booked
     reviews: [],
+    uploadedAt: Date.now() - 259200000,
   },
   {
     id: "4",
@@ -135,6 +103,123 @@ const initialPlaces: Place[] = [
         date: Date.now() - 259200000,
       },
     ],
+    uploadedAt: Date.now() - 259200000 * 2,
+  },
+  {
+    id: "5",
+    name: "Grand Mountain Resort",
+    description:
+      "Experience breathtaking mountain views with guided hiking tours, camping packages, and adventure activities. Perfect for nature enthusiasts.",
+    category: "Mountain",
+    address: "Mountain Trail Road, Alpine Valley",
+    latitude: 40.7589,
+    longitude: -73.9851,
+    uploaderId: "1",
+    packages: [
+      {
+        id: "pkg1",
+        name: "Weekend Hiking Adventure",
+        description: "2-day guided hiking tour with camping equipment included",
+        price: 150,
+        duration: 2880, // 2 days in minutes
+        availableSlots: 20,
+        joinDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 7 days from now
+      },
+      {
+        id: "pkg2",
+        name: "Sunrise Peak Climb",
+        description: "Early morning climb to the peak with breakfast at summit",
+        price: 75,
+        duration: 240, // 4 hours
+        availableSlots: 15,
+        joinDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 3 days from now
+      },
+    ],
+    reviews: [],
+    uploadedAt: Date.now() - 86400000,
+  },
+  {
+    id: "6",
+    name: "Luxury Downtown Hotel",
+    description:
+      "5-star hotel in the heart of the city with premium amenities, spa services, and fine dining. Perfect for business and leisure travelers.",
+    category: "Hotel",
+    address: "789 Luxury Boulevard, Downtown",
+    latitude: 40.7505,
+    longitude: -73.9934,
+    uploaderId: "1",
+    packages: [
+      {
+        id: "pkg3",
+        name: "Deluxe Suite Package",
+        description: "2-night stay in deluxe suite with breakfast and spa access",
+        price: 450,
+        duration: 2880, // 2 days
+        availableSlots: 10,
+      },
+    ],
+    reviews: [
+      {
+        id: "r4",
+        userId: "2",
+        userName: "VisitorDemo",
+        rating: 5,
+        comment: "Exceptional service and beautiful rooms. Highly recommended!",
+        date: Date.now() - 432000000,
+      },
+    ],
+    uploadedAt: Date.now() - 432000000,
+  },
+  {
+    id: "7",
+    name: "Eagle Peak Mountain Trail",
+    description:
+      "Challenging mountain trail with stunning panoramic views. Features multiple difficulty levels, wildlife spotting opportunities, and professional guides. Perfect for adventure seekers and nature photographers.",
+    category: "Mountain",
+    address: "Eagle Peak Road, High Altitude Range",
+    latitude: 41.0128,
+    longitude: -74.1234,
+    uploaderId: "1",
+    packages: [
+      {
+        id: "pkg4",
+        name: "Full Day Summit Challenge",
+        description: "Complete day hike to the summit with lunch and professional photography session",
+        price: 120,
+        duration: 480, // 8 hours
+        availableSlots: 12,
+        joinDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 5 days from now
+      },
+      {
+        id: "pkg5",
+        name: "3-Day Mountain Expedition",
+        description: "Multi-day adventure with camping, meals, and all equipment provided. Includes sunrise viewing and stargazing sessions.",
+        price: 350,
+        duration: 4320, // 3 days
+        availableSlots: 8,
+        joinDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 10 days from now
+      },
+      {
+        id: "pkg6",
+        name: "Beginner Friendly Half-Day",
+        description: "Gentle 4-hour hike perfect for beginners. Includes guide, snacks, and basic equipment rental.",
+        price: 60,
+        duration: 240, // 4 hours
+        availableSlots: 25,
+        joinDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 2 days from now
+      },
+    ],
+    reviews: [
+      {
+        id: "r5",
+        userId: "2",
+        userName: "VisitorDemo",
+        rating: 5,
+        comment: "Amazing experience! The views were absolutely breathtaking. The guides were knowledgeable and friendly.",
+        date: Date.now() - 345600000,
+      },
+    ],
+    uploadedAt: Date.now() - 345600000,
   },
 ]
 
@@ -146,8 +231,19 @@ export function initializeStorage() {
     localStorage.setItem(USERS_KEY, JSON.stringify(initialUsers))
   }
 
-  if (!localStorage.getItem(PLACES_KEY)) {
-    localStorage.setItem(PLACES_KEY, JSON.stringify(initialPlaces))
+  // Initialize places - merge with existing to ensure all seed places are present
+  const existingPlaces = getPlaces()
+  const existingPlaceIds = new Set(existingPlaces.map((p) => p.id))
+  
+  // Add any missing seed places
+  const missingPlaces = initialPlaces.filter((place) => !existingPlaceIds.has(place.id))
+  
+  if (missingPlaces.length > 0) {
+    const updatedPlaces = [...existingPlaces, ...missingPlaces]
+    savePlaces(updatedPlaces)
+  } else if (existingPlaces.length === 0) {
+    // If no places exist at all, initialize with seed data
+    savePlaces(initialPlaces)
   }
 
   if (!localStorage.getItem(BOOKINGS_KEY)) {

@@ -37,6 +37,16 @@ export function Header() {
               >
                 Add Place
               </Link>
+              {currentUser && (
+                <Link
+                  href="/bookings"
+                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                    pathname === "/bookings" ? "text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  {currentUser.role === "promoter" ? "Bookings" : "My Bookings"}
+                </Link>
+              )}
             </nav>
           </div>
 

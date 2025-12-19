@@ -5,14 +5,17 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { ReviewSection } from "@/components/features/reviews/review-section"
-import { BookingCard } from "@/components/features/booking/booking-card" 
+import { BookingCard } from "@/components/features/booking/booking-card"
+import { RestaurantBookingForm } from "@/components/features/booking/restaurant-booking-form"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { getPlaceById } from "@/lib/storage"
 import { useAuth } from "@/hooks/use-auth"
 import type { Place } from "@/lib/types"
-import { MapPin, Star, ArrowLeft } from "lucide-react"
+import { MapPin, Star, ArrowLeft, Info } from "lucide-react"
+import Image from "next/image"
 
 export default function PlaceDetailPage() {
   const params = useParams()
@@ -78,6 +81,22 @@ export default function PlaceDetailPage() {
         <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
           <div className="space-y-6">
             <Card>
+              {place.image && (
+                <div className="relative w-full h-64 md:h-96 overflow-hidden">
+                  {place.image.startsWith("data:") ? (
+                    <img src={place.image} alt={place.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Image
+                      src={place.image}
+                      alt={place.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+                      unoptimized
+                    />
+                  )}
+                </div>
+              )}
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -115,16 +134,86 @@ export default function PlaceDetailPage() {
           </div>
 
           <div className="space-y-6">
-            {place?.packages?.length > 0 && currentUser?.role === "visitor" && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Available Packages</h3>
-                {place.packages.map((pkg) => (
-                  <BookingCard key={pkg.id} pkg={pkg} place={place} user={currentUser} onBookingComplete={loadPlace} />
-                ))}
-              </div>
+            {/* Booking Section - Different based on category and user role */}
+            {currentUser?.role === "visitor" && (
+              <>
+                {place.category === "Visitable Place" && (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      This is a visitable place and cannot be booked. You can visit it directly!
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {place.category !== "Visitable Place" && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Ready to Book?</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Button asChild className="w-full" size="lg">
+                        <Link href={`/book/${place.id}`}>Book Now</Link>
+                      </Button>
+                      <p className="text-sm text-muted-foreground mt-2 text-center">
+                        Complete your booking on our dedicated booking page
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Quick preview of booking options */}
+                {place.category === "Restaurant" && (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      Restaurant bookings require check-in time and table number. Click &quot;Book Now&quot; to proceed.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {place.category === "Mountain" && place?.packages?.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-foreground">Available Packages</h3>
+                    {place.packages.slice(0, 2).map((pkg) => (
+                      <div key={pkg.id} className="p-3 border border-border rounded-lg text-sm">
+                        <div className="font-medium">{pkg.name}</div>
+                        <div className="text-muted-foreground">
+                          ${pkg.price} · {pkg.duration} min · {pkg.availableSlots} slots
+                        </div>
+                      </div>
+                    ))}
+                    {place.packages.length > 2 && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        +{place.packages.length - 2} more package{place.packages.length - 2 !== 1 ? "s" : ""}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {(place.category === "Hotel" || place.category === "Cafe") && place?.packages?.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold text-foreground">Available Packages</h3>
+                    {place.packages.slice(0, 2).map((pkg) => (
+                      <div key={pkg.id} className="p-3 border border-border rounded-lg text-sm">
+                        <div className="font-medium">{pkg.name}</div>
+                        <div className="text-muted-foreground">
+                          ${pkg.price} · {pkg.duration} min · {pkg.availableSlots} slots
+                        </div>
+                      </div>
+                    ))}
+                    {place.packages.length > 2 && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        +{place.packages.length - 2} more package{place.packages.length - 2 !== 1 ? "s" : ""}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
-            {place?.packages?.length > 0 && currentUser?.role === "promoter" && (
+            {/* Promoter view of packages */}
+            {currentUser?.role === "promoter" && place?.packages?.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>Booking Packages</CardTitle>
@@ -138,11 +227,37 @@ export default function PlaceDetailPage() {
                           ${pkg.price} · {pkg.duration} min
                         </p>
                         <p>{pkg.availableSlots} slots available</p>
+                        {pkg.joinDate && <p>Join Date: {new Date(pkg.joinDate).toLocaleDateString()}</p>}
                       </div>
                     </div>
                   ))}
                 </CardContent>
               </Card>
+            )}
+
+            {currentUser?.role === "promoter" && place.category === "Restaurant" && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  Restaurant bookings are made directly by visitors with check-in time and table number.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {currentUser?.role === "promoter" && place.category === "Visitable Place" && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  Visitable places cannot be booked. Visitors can visit them directly.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {!currentUser && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>Please log in to make a booking.</AlertDescription>
+              </Alert>
             )}
 
             <Card>

@@ -45,6 +45,15 @@ export function BookingCard({ pkg, place, user, onBookingComplete }: BookingCard
       return
     }
 
+    // For mountain packages, validate join date
+    if (place.category === "Mountain" && pkg.joinDate) {
+      const joinDate = new Date(pkg.joinDate)
+      if (selectedDate < joinDate) {
+        setError(`Booking date must be on or after the package join date: ${new Date(pkg.joinDate).toLocaleDateString()}`)
+        return
+      }
+    }
+
     setIsBooking(true)
 
     const booking: Booking = {
@@ -61,6 +70,7 @@ export function BookingCard({ pkg, place, user, onBookingComplete }: BookingCard
       bookingDate: Date.now(),
       scheduledDate,
       status: "pending",
+      ...(place.category === "Mountain" && pkg.joinDate ? { joinDate: pkg.joinDate } : {}),
     }
 
     addBooking(booking)
@@ -100,6 +110,12 @@ export function BookingCard({ pkg, place, user, onBookingComplete }: BookingCard
             <Users className="h-4 w-4" />
             <span>{pkg.availableSlots} slots available</span>
           </div>
+          {pkg.joinDate && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>Join Date: {new Date(pkg.joinDate).toLocaleDateString()}</span>
+            </div>
+          )}
         </div>
 
         {!success && pkg.availableSlots > 0 && (

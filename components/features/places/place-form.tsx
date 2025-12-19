@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, Plus, X } from "lucide-react"
+import { AlertCircle, Plus, X, Image as ImageIcon } from "lucide-react"
 import { addPlace } from "@/lib/storage"
 import type { Place, BookingPackage } from "@/lib/types"
 
@@ -28,6 +28,7 @@ export function PlaceForm({ userId }: PlaceFormProps) {
     address: "",
     latitude: "",
     longitude: "",
+    image: "",
   })
   const [packages, setPackages] = useState<BookingPackage[]>([])
   const [showPackageForm, setShowPackageForm] = useState(false)
@@ -37,12 +38,37 @@ export function PlaceForm({ userId }: PlaceFormProps) {
     price: "",
     duration: "",
     availableSlots: "",
+    joinDate: "",
   })
   const [error, setError] = useState("")
+  const [imagePreview, setImagePreview] = useState<string>("")
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Image size must be less than 5MB")
+        return
+      }
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setFormData({ ...formData, image: base64String })
+        setImagePreview(base64String)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   const handleAddPackage = () => {
     if (!packageForm.name || !packageForm.price || !packageForm.duration || !packageForm.availableSlots) {
       setError("Please fill in all package fields")
+      return
+    }
+
+    // For mountain packages, joinDate is required
+    if (formData.category === "Mountain" && !packageForm.joinDate) {
+      setError("Join date is required for mountain packages")
       return
     }
 
@@ -72,10 +98,11 @@ export function PlaceForm({ userId }: PlaceFormProps) {
       price,
       duration,
       availableSlots: slots,
+      ...(formData.category === "Mountain" && packageForm.joinDate ? { joinDate: packageForm.joinDate } : {}),
     }
 
     setPackages([...packages, newPackage])
-    setPackageForm({ name: "", description: "", price: "", duration: "", availableSlots: "" })
+    setPackageForm({ name: "", description: "", price: "", duration: "", availableSlots: "", joinDate: "" })
     setShowPackageForm(false)
     setError("")
   }
@@ -121,8 +148,10 @@ export function PlaceForm({ userId }: PlaceFormProps) {
       latitude: lat,
       longitude: lng,
       uploaderId: userId,
+      image: formData.image || undefined,
       reviews: [],
       packages,
+      uploadedAt: Date.now(),
     }
 
     addPlace(newPlace)
@@ -159,19 +188,63 @@ export function PlaceForm({ userId }: PlaceFormProps) {
             <Label htmlFor="category">Category *</Label>
             <Select
               value={formData.category}
-              onValueChange={(value) => setFormData({ ...formData, category: value as Place["category"] })}
+              onValueChange={(value) => {
+                setFormData({ ...formData, category: value as Place["category"] })
+                // Reset packages when category changes to avoid confusion
+                if (value !== formData.category) {
+                  setPackages([])
+                }
+              }}
             >
               <SelectTrigger id="category">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Restaurant">Restaurant</SelectItem>
-                <SelectItem value="Park">Park</SelectItem>
-                <SelectItem value="Museum">Museum</SelectItem>
+                <SelectItem value="Hotel">Hotel</SelectItem>
                 <SelectItem value="Cafe">Cafe</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="Mountain">Mountain</SelectItem>
+                <SelectItem value="Visitable Place">Visitable Place</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="image">Place Image (Optional)</Label>
+            <div className="space-y-2">
+              <Input
+                id="image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="cursor-pointer"
+              />
+              {imagePreview && (
+                <div className="relative w-full h-48 rounded-lg overflow-hidden border border-border">
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => {
+                      setImagePreview("")
+                      setFormData({ ...formData, image: "" })
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              {!imagePreview && (
+                <div className="flex items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg text-muted-foreground">
+                  <div className="text-center">
+                    <ImageIcon className="h-8 w-8 mx-auto mb-2" />
+                    <p className="text-sm">No image selected</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -293,6 +366,20 @@ export function PlaceForm({ userId }: PlaceFormProps) {
                     </div>
                   </div>
 
+                  {formData.category === "Mountain" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="pkg-join-date">Join Date *</Label>
+                      <Input
+                        id="pkg-join-date"
+                        type="date"
+                        value={packageForm.joinDate}
+                        onChange={(e) => setPackageForm({ ...packageForm, joinDate: e.target.value })}
+                        min={new Date().toISOString().split("T")[0]}
+                      />
+                      <p className="text-xs text-muted-foreground">Date when visitors can join this package</p>
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
                     <Button type="button" onClick={handleAddPackage} size="sm">
                       Add Package
@@ -303,7 +390,7 @@ export function PlaceForm({ userId }: PlaceFormProps) {
                       size="sm"
                       onClick={() => {
                         setShowPackageForm(false)
-                        setPackageForm({ name: "", description: "", price: "", duration: "", availableSlots: "" })
+                        setPackageForm({ name: "", description: "", price: "", duration: "", availableSlots: "", joinDate: "" })
                       }}
                     >
                       Cancel
@@ -325,6 +412,7 @@ export function PlaceForm({ userId }: PlaceFormProps) {
                           <span>${pkg.price}</span>
                           <span>{pkg.duration} min</span>
                           <span>{pkg.availableSlots} slots</span>
+                          {pkg.joinDate && <span>Join: {new Date(pkg.joinDate).toLocaleDateString()}</span>}
                         </div>
                       </div>
                       <Button

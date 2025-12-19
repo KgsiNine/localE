@@ -52,7 +52,7 @@ export function VisitorView({ allPlaces }: VisitorViewProps) {
     return allPlaces.sort((a, b) => calculateAverageRating(b) - calculateAverageRating(a)).slice(0, 6)
   }
 
-  const categories = ["Restaurant", "Park", "Museum", "Cafe", "Other"]
+  const categories = ["Restaurant", "Hotel", "Cafe", "Mountain", "Visitable Place"]
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -60,7 +60,7 @@ export function VisitorView({ allPlaces }: VisitorViewProps) {
       <div className="mb-12 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-foreground mb-3">Discover Amazing Places</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Explore local restaurants, parks, museums, and more. Share your experiences with the community.
+          Explore local restaurants, hotels, cafes, mountains, and visitable places. Book your next adventure or visit.
         </p>
       </div>
 
@@ -91,10 +91,10 @@ export function VisitorView({ allPlaces }: VisitorViewProps) {
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="Restaurant">Restaurant</SelectItem>
-                <SelectItem value="Park">Park</SelectItem>
-                <SelectItem value="Museum">Museum</SelectItem>
+                <SelectItem value="Hotel">Hotel</SelectItem>
                 <SelectItem value="Cafe">Cafe</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="Mountain">Mountain</SelectItem>
+                <SelectItem value="Visitable Place">Visitable Place</SelectItem>
               </SelectContent>
             </Select>
           </div>

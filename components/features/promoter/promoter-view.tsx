@@ -1,13 +1,16 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import type { Place, User } from "@/lib/types"
 import { PlaceList } from "@/components/features/places/place-list"
 import { SectionTitle } from "@/components/features/places/section-title"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Search, Plus, Calendar, TrendingUp } from "lucide-react"
 
 interface PromoterViewProps {
   currentUser: User
@@ -28,10 +31,74 @@ export function PromoterView({ currentUser, allPlaces }: PromoterViewProps) {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <SectionTitle
-        title="My Places"
-        subtitle={`You have uploaded ${myPlaces.length} place${myPlaces.length !== 1 ? "s" : ""}`}
-      />
+      {/* Hero Section */}
+      <div className="mb-12 text-center">
+        <h1 className="text-4xl font-bold tracking-tight text-foreground mb-3">Manage Your Places</h1>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+          Create and manage restaurants, hotels, cafes, mountains, and visitable places. Share great locations with the community.
+        </p>
+        <Button asChild size="lg" className="gap-2">
+          <Link href="/add">
+            <Plus className="h-5 w-5" />
+            Create New Place
+          </Link>
+        </Button>
+      </div>
+
+      {/* Quick Stats */}
+      {myPlaces.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-3 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Places</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{myPlaces.length}</div>
+              <p className="text-xs text-muted-foreground">Places you've created</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Categories</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {new Set(myPlaces.map((p) => p.category)).size}
+              </div>
+              <p className="text-xs text-muted-foreground">Different categories</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Reviews</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {myPlaces.reduce((sum, place) => sum + place.reviews.length, 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">Across all your places</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mb-6">
+        <SectionTitle
+          title="My Places"
+          subtitle={`You have uploaded ${myPlaces.length} place${myPlaces.length !== 1 ? "s" : ""}`}
+        />
+        {myPlaces.length > 0 && (
+          <Button asChild variant="outline" className="gap-2">
+            <Link href="/add">
+              <Plus className="h-4 w-4" />
+              Add Place
+            </Link>
+          </Button>
+        )}
+      </div>
 
       {/* Search and Filter Section */}
       <div className="mb-8 space-y-4">
@@ -60,10 +127,10 @@ export function PromoterView({ currentUser, allPlaces }: PromoterViewProps) {
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="Restaurant">Restaurant</SelectItem>
-                <SelectItem value="Park">Park</SelectItem>
-                <SelectItem value="Museum">Museum</SelectItem>
+                <SelectItem value="Hotel">Hotel</SelectItem>
                 <SelectItem value="Cafe">Cafe</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="Mountain">Mountain</SelectItem>
+                <SelectItem value="Visitable Place">Visitable Place</SelectItem>
               </SelectContent>
             </Select>
           </div>
