@@ -1,121 +1,166 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Header } from "@/components/layout/header"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAuth } from "@/hooks/use-auth"
-import { getBookingsByVisitor, getBookingsByPromoter, updateBooking, getPlaceById } from "@/lib/storage"
-import type { Booking } from "@/lib/types"
-import { Calendar, Clock, DollarSign, MapPin, User, AlertCircle, Hash, Search, Filter, CheckCircle2, XCircle, Clock3, TrendingUp } from "lucide-react"
-import Link from "next/link"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Header } from "@/components/layout/header";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  getBookingsByVisitor,
+  getBookingsByPromoter,
+  updateBooking,
+  getPlaceById,
+} from "@/lib/storage";
+import type { Booking } from "@/lib/types";
+import {
+  Calendar,
+  Clock,
+  DollarSign,
+  MapPin,
+  User,
+  AlertCircle,
+  Hash,
+  Search,
+  Filter,
+  CheckCircle2,
+  XCircle,
+  Clock3,
+  TrendingUp,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function BookingsPage() {
-  const { currentUser, isLoading: authLoading } = useAuth()
-  const router = useRouter()
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [allBookings, setAllBookings] = useState<Booking[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [sortBy, setSortBy] = useState<string>("newest")
+  const { currentUser, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [allBookings, setAllBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("newest");
 
   useEffect(() => {
     // Wait for auth to finish loading
     if (authLoading) {
-      return
+      return;
     }
 
     // Check if user is logged in after auth has loaded
     if (!currentUser) {
-      router.push("/login")
-      return
+      router.push("/login");
+      return;
     }
 
     const loadBookings = () => {
       const userBookings =
-        currentUser.role === "visitor" ? getBookingsByVisitor(currentUser.id) : getBookingsByPromoter(currentUser.id)
+        currentUser.role === "visitor"
+          ? getBookingsByVisitor(currentUser.id)
+          : getBookingsByPromoter(currentUser.id);
 
-      setAllBookings(userBookings)
-      setBookings(userBookings.sort((a, b) => b.bookingDate - a.bookingDate))
-      setIsLoading(false)
-    }
+      setAllBookings(userBookings);
+      setBookings(userBookings.sort((a, b) => b.bookingDate - a.bookingDate));
+      setIsLoading(false);
+    };
 
-    loadBookings()
-  }, [currentUser, router, authLoading])
+    loadBookings();
+  }, [currentUser, router, authLoading]);
 
   // Filter and sort bookings
   useEffect(() => {
-    let filtered = [...allBookings]
+    let filtered = [...allBookings];
 
     // Search filter
     if (searchQuery) {
       filtered = filtered.filter(
         (booking) =>
           booking.placeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          booking.visitorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          booking.packageName?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+          booking.visitorName.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
 
     // Status filter
     if (statusFilter !== "all") {
-      filtered = filtered.filter((booking) => booking.status === statusFilter)
+      filtered = filtered.filter((booking) => booking.status === statusFilter);
     }
 
     // Sort
     switch (sortBy) {
       case "newest":
-        filtered.sort((a, b) => b.bookingDate - a.bookingDate)
-        break
+        filtered.sort((a, b) => b.bookingDate - a.bookingDate);
+        break;
       case "oldest":
-        filtered.sort((a, b) => a.bookingDate - b.bookingDate)
-        break
+        filtered.sort((a, b) => a.bookingDate - b.bookingDate);
+        break;
       case "scheduled":
-        filtered.sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime())
-        break
+        filtered.sort(
+          (a, b) =>
+            new Date(a.scheduledDate).getTime() -
+            new Date(b.scheduledDate).getTime()
+        );
+        break;
       case "price-high":
-        filtered.sort((a, b) => b.price - a.price)
-        break
+        filtered.sort((a, b) => b.price - a.price);
+        break;
       case "price-low":
-        filtered.sort((a, b) => a.price - b.price)
-        break
+        filtered.sort((a, b) => a.price - b.price);
+        break;
       default:
-        filtered.sort((a, b) => b.bookingDate - a.bookingDate)
+        filtered.sort((a, b) => b.bookingDate - a.bookingDate);
     }
 
-    setBookings(filtered)
-  }, [allBookings, searchQuery, statusFilter, sortBy])
+    setBookings(filtered);
+  }, [allBookings, searchQuery, statusFilter, sortBy]);
 
-  const handleStatusChange = (booking: Booking, newStatus: Booking["status"]) => {
-    const updatedBooking = { ...booking, status: newStatus }
-    updateBooking(updatedBooking)
-    const updated = allBookings.map((b) => (b.id === booking.id ? updatedBooking : b))
-    setAllBookings(updated)
-    setBookings(updated)
-  }
+  const handleStatusChange = (
+    booking: Booking,
+    newStatus: Booking["status"]
+  ) => {
+    const updatedBooking = { ...booking, status: newStatus };
+    updateBooking(updatedBooking);
+    const updated = allBookings.map((b) =>
+      b.id === booking.id ? updatedBooking : b
+    );
+    setAllBookings(updated);
+    setBookings(updated);
+  };
 
   // Calculate statistics for promoters
   const getBookingStats = () => {
-    if (currentUser?.role !== "promoter") return null
+    if (currentUser?.role !== "promoter") return null;
 
-    const total = allBookings.length
-    const pending = allBookings.filter((b) => b.status === "pending").length
-    const confirmed = allBookings.filter((b) => b.status === "confirmed").length
-    const cancelled = allBookings.filter((b) => b.status === "cancelled").length
+    const total = allBookings.length;
+    const pending = allBookings.filter((b) => b.status === "pending").length;
+    const confirmed = allBookings.filter(
+      (b) => b.status === "confirmed"
+    ).length;
+    const cancelled = allBookings.filter(
+      (b) => b.status === "cancelled"
+    ).length;
     const totalRevenue = allBookings
       .filter((b) => b.status === "confirmed")
-      .reduce((sum, b) => sum + b.price, 0)
+      .reduce((sum, b) => sum + b.price, 0);
 
-    return { total, pending, confirmed, cancelled, totalRevenue }
-  }
+    return { total, pending, confirmed, cancelled, totalRevenue };
+  };
 
-  const stats = getBookingStats()
+  const stats = getBookingStats();
 
   if (authLoading || isLoading) {
     return (
@@ -128,19 +173,19 @@ export default function BookingsPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   const getStatusColor = (status: Booking["status"]) => {
     switch (status) {
       case "confirmed":
-        return "bg-green-500/10 text-green-600 border-green-500/50"
+        return "bg-green-500/10 text-green-600 border-green-500/50";
       case "cancelled":
-        return "bg-red-500/10 text-red-600 border-red-500/50"
+        return "bg-red-500/10 text-red-600 border-red-500/50";
       default:
-        return "bg-yellow-500/10 text-yellow-600 border-yellow-500/50"
+        return "bg-yellow-500/10 text-yellow-600 border-yellow-500/50";
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -148,7 +193,9 @@ export default function BookingsPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            {currentUser?.role === "visitor" ? "My Bookings" : "Booking Requests"}
+            {currentUser?.role === "visitor"
+              ? "My Bookings"
+              : "Booking Requests"}
           </h1>
           <p className="text-muted-foreground">
             {currentUser?.role === "visitor"
@@ -162,12 +209,16 @@ export default function BookingsPage() {
           <div className="grid gap-4 md:grid-cols-4 mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Bookings
+                </CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.total}</div>
-                <p className="text-xs text-muted-foreground">All time bookings</p>
+                <p className="text-xs text-muted-foreground">
+                  All time bookings
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -176,7 +227,9 @@ export default function BookingsPage() {
                 <Clock3 className="h-4 w-4 text-yellow-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+                <div className="text-2xl font-bold text-yellow-600">
+                  {stats.pending}
+                </div>
                 <p className="text-xs text-muted-foreground">Awaiting action</p>
               </CardContent>
             </Card>
@@ -186,18 +239,24 @@ export default function BookingsPage() {
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.confirmed}</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {stats.confirmed}
+                </div>
                 <p className="text-xs text-muted-foreground">Active bookings</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Revenue
+                </CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">${stats.totalRevenue}</div>
-                <p className="text-xs text-muted-foreground">From confirmed bookings</p>
+                <p className="text-xs text-muted-foreground">
+                  From confirmed bookings
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -245,14 +304,19 @@ export default function BookingsPage() {
                     <SelectItem value="newest">Newest First</SelectItem>
                     <SelectItem value="oldest">Oldest First</SelectItem>
                     <SelectItem value="scheduled">Scheduled Date</SelectItem>
-                    <SelectItem value="price-high">Price: High to Low</SelectItem>
-                    <SelectItem value="price-low">Price: Low to High</SelectItem>
+                    <SelectItem value="price-high">
+                      Price: High to Low
+                    </SelectItem>
+                    <SelectItem value="price-low">
+                      Price: Low to High
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="text-sm text-muted-foreground">
-              Showing {bookings.length} of {allBookings.length} booking{allBookings.length !== 1 ? "s" : ""}
+              Showing {bookings.length} of {allBookings.length} booking
+              {allBookings.length !== 1 ? "s" : ""}
             </div>
           </div>
         )}
@@ -269,7 +333,7 @@ export default function BookingsPage() {
               </p>
               {currentUser?.role === "visitor" && (
                 <Button asChild>
-                  <Link href="/">Browse Places</Link>
+                  <Link href="/?category=bookable">Browse Places</Link>
                 </Button>
               )}
             </CardContent>
@@ -281,13 +345,25 @@ export default function BookingsPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="mb-1">{booking.placeName}</CardTitle>
+                      <CardTitle className="mb-1">
+                        {booking.placeName}
+                      </CardTitle>
                       <CardDescription>
-                        {booking.packageName || (booking.checkInTime ? "Restaurant Booking" : "Direct Booking")}
+                        {booking.checkInTime
+                          ? "Restaurant Booking"
+                          : booking.startDate
+                          ? "Mountain Booking"
+                          : booking.checkInDate
+                          ? "Hotel Booking"
+                          : "Direct Booking"}
                       </CardDescription>
                     </div>
-                    <Badge variant="outline" className={getStatusColor(booking.status)}>
-                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                    <Badge
+                      variant="outline"
+                      className={getStatusColor(booking.status)}
+                    >
+                      {booking.status.charAt(0).toUpperCase() +
+                        booking.status.slice(1)}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -302,7 +378,10 @@ export default function BookingsPage() {
                       )}
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar className="h-4 w-4" />
-                        <span>Scheduled: {new Date(booking.scheduledDate).toLocaleDateString()}</span>
+                        <span>
+                          Scheduled:{" "}
+                          {new Date(booking.scheduledDate).toLocaleDateString()}
+                        </span>
                       </div>
                       {booking.checkInTime && (
                         <div className="flex items-center gap-2 text-muted-foreground">
@@ -316,17 +395,59 @@ export default function BookingsPage() {
                           <span>Table: {booking.tableNumber}</span>
                         </div>
                       )}
-                      {booking.joinDate && (
+                      {booking.startDate && (
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Calendar className="h-4 w-4" />
-                          <span>Join Date: {new Date(booking.joinDate).toLocaleDateString()}</span>
+                          <span>
+                            Start Date:{" "}
+                            {new Date(booking.startDate).toLocaleDateString()}
+                          </span>
                         </div>
                       )}
-                      {booking.packageName && (
+                      {booking.endDate && (
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <span>Package: {booking.packageName}</span>
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            End Date:{" "}
+                            {new Date(booking.endDate).toLocaleDateString()}
+                          </span>
                         </div>
                       )}
+                      {booking.numberOfSlots && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Hash className="h-4 w-4" />
+                          <span>Slots: {booking.numberOfSlots}</span>
+                        </div>
+                      )}
+                      {booking.checkInDate && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            Check-in:{" "}
+                            {new Date(booking.checkInDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                      {booking.checkOutDate && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            Check-out:{" "}
+                            {new Date(
+                              booking.checkOutDate
+                            ).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                      {booking.selectedRoomIds &&
+                        booking.selectedRoomIds.length > 0 && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Hash className="h-4 w-4" />
+                            <span>
+                              Rooms: {booking.selectedRoomIds.join(", ")}
+                            </span>
+                          </div>
+                        )}
                       {booking.duration > 0 && (
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Clock className="h-4 w-4" />
@@ -352,7 +473,9 @@ export default function BookingsPage() {
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
-                                onClick={() => handleStatusChange(booking, "confirmed")}
+                                onClick={() =>
+                                  handleStatusChange(booking, "confirmed")
+                                }
                                 className="flex-1 bg-green-600 hover:bg-green-700"
                               >
                                 <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -361,7 +484,9 @@ export default function BookingsPage() {
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                onClick={() => handleStatusChange(booking, "cancelled")}
+                                onClick={() =>
+                                  handleStatusChange(booking, "cancelled")
+                                }
                                 className="flex-1"
                               >
                                 <XCircle className="h-4 w-4 mr-2" />
@@ -373,7 +498,9 @@ export default function BookingsPage() {
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={() => handleStatusChange(booking, "cancelled")}
+                              onClick={() =>
+                                handleStatusChange(booking, "cancelled")
+                              }
                               className="w-full"
                             >
                               <XCircle className="h-4 w-4 mr-2" />
@@ -384,14 +511,21 @@ export default function BookingsPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleStatusChange(booking, "pending")}
+                              onClick={() =>
+                                handleStatusChange(booking, "pending")
+                              }
                               className="w-full"
                             >
                               <Clock3 className="h-4 w-4 mr-2" />
                               Reset to Pending
                             </Button>
                           )}
-                          <Button size="sm" variant="outline" asChild className="w-full">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            asChild
+                            className="w-full"
+                          >
                             <Link href={`/place/${booking.placeId}`}>
                               <MapPin className="h-4 w-4 mr-2" />
                               View Place
@@ -401,7 +535,12 @@ export default function BookingsPage() {
                       )}
 
                       {currentUser?.role === "visitor" && (
-                        <Button size="sm" variant="outline" asChild className="mt-2 bg-transparent">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          asChild
+                          className="mt-2 bg-transparent"
+                        >
                           <Link href={`/place/${booking.placeId}`}>
                             <MapPin className="h-4 w-4 mr-2" />
                             View Place
@@ -417,5 +556,5 @@ export default function BookingsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,40 +1,53 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import type { User } from "@/lib/types"
-import { getCurrentUser, setCurrentUser, getUsers, addUser, initializeStorage } from "@/lib/storage"
+import { useState, useEffect } from "react";
+import type { User } from "@/lib/types";
+import {
+  getCurrentUser,
+  setCurrentUser,
+  getUsers,
+  addUser,
+  initializeStorage,
+} from "@/lib/storage";
 
 export function useAuth() {
-  const [currentUser, setCurrentUserState] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [currentUser, setCurrentUserState] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    initializeStorage()
-    const user = getCurrentUser()
-    setCurrentUserState(user)
-    setIsLoading(false)
-  }, [])
+    initializeStorage();
+    const user = getCurrentUser();
+    setCurrentUserState(user);
+    setIsLoading(false);
+  }, []);
 
   const login = (email: string, password: string): boolean => {
-    const users = getUsers()
-    const user = users.find((u) => u.email === email && u.password === password)
+    const users = getUsers();
+    const user = users.find(
+      (u) => u.email === email && u.password === password
+    );
 
     if (user) {
-      const userWithoutPassword = { ...user }
-      setCurrentUser(userWithoutPassword)
-      setCurrentUserState(userWithoutPassword)
-      return true
+      const userWithoutPassword = { ...user };
+      setCurrentUser(userWithoutPassword);
+      setCurrentUserState(userWithoutPassword);
+      return true;
     }
 
-    return false
-  }
+    return false;
+  };
 
-  const signup = (email: string, password: string, username: string): boolean => {
-    const users = getUsers()
+  const signup = (
+    email: string,
+    password: string,
+    username: string,
+    role: "promoter" | "visitor" = "visitor"
+  ): boolean => {
+    const users = getUsers();
 
     // Check if user already exists
     if (users.some((u) => u.email === email)) {
-      return false
+      return false;
     }
 
     const newUser: User = {
@@ -42,19 +55,20 @@ export function useAuth() {
       email,
       username,
       password,
-    }
+      role,
+    };
 
-    addUser(newUser)
-    const userWithoutPassword = { ...newUser }
-    setCurrentUser(userWithoutPassword)
-    setCurrentUserState(userWithoutPassword)
-    return true
-  }
+    addUser(newUser);
+    const userWithoutPassword = { ...newUser };
+    setCurrentUser(userWithoutPassword);
+    setCurrentUserState(userWithoutPassword);
+    return true;
+  };
 
   const logout = () => {
-    setCurrentUser(null)
-    setCurrentUserState(null)
-  }
+    setCurrentUser(null);
+    setCurrentUserState(null);
+  };
 
   return {
     currentUser,
@@ -62,5 +76,5 @@ export function useAuth() {
     login,
     signup,
     logout,
-  }
+  };
 }

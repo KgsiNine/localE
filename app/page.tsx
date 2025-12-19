@@ -1,25 +1,33 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Header } from "@/components/layout/header"
-import { PromoterView } from "@/components/features/promoter/promoter-view"
-import { VisitorView } from "@/components/features/visitor/visitor-view"
-import { getPlaces, initializeStorage, getCurrentUser } from "@/lib/storage"
-import type { Place, User } from "@/lib/types"
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Header } from "@/components/layout/header";
+import { PromoterView } from "@/components/features/promoter/promoter-view";
+import { VisitorView } from "@/components/features/visitor/visitor-view";
+import { getPlaces, initializeStorage, getCurrentUser } from "@/lib/storage";
+import type { Place, User } from "@/lib/types";
 
 export default function HomePage() {
-  const [places, setPlaces] = useState<Place[]>([])
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState<string>("all")
+  const searchParams = useSearchParams();
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   useEffect(() => {
-    initializeStorage()
-    setPlaces(getPlaces())
-    setCurrentUser(getCurrentUser())
-    setIsLoading(false)
-  }, [])
+    initializeStorage();
+    setPlaces(getPlaces());
+    setCurrentUser(getCurrentUser());
+
+    // Read category from URL params
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      setCategoryFilter(categoryParam);
+    }
+
+    setIsLoading(false);
+  }, [searchParams]);
 
   if (isLoading) {
     return (
@@ -29,14 +37,8 @@ export default function HomePage() {
           <div className="text-center">Loading...</div>
         </main>
       </div>
-    )
+    );
   }
-
-  const filteredPlaces = places.filter((place) => {
-    const matchesSearch = place.name.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = categoryFilter === "all" || place.category === categoryFilter
-    return matchesSearch && matchesCategory
-  })
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,8 +46,11 @@ export default function HomePage() {
       {currentUser?.role === "promoter" ? (
         <PromoterView currentUser={currentUser} allPlaces={places} />
       ) : (
-        <VisitorView allPlaces={filteredPlaces} />
+        <VisitorView
+          allPlaces={places}
+          initialCategoryFilter={categoryFilter}
+        />
       )}
     </div>
-  )
+  );
 }

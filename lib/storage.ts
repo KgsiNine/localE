@@ -1,9 +1,9 @@
-import type { User, Place, Booking } from "./types"
+import type { User, Place, Booking } from "./types";
 
-const USERS_KEY = "local_explorer_users"
-const PLACES_KEY = "local_explorer_places"
-const CURRENT_USER_KEY = "local_explorer_current_user"
-const BOOKINGS_KEY = "local_explorer_bookings"
+const USERS_KEY = "local_explorer_users";
+const PLACES_KEY = "local_explorer_places";
+const CURRENT_USER_KEY = "local_explorer_current_user";
+const BOOKINGS_KEY = "local_explorer_bookings";
 
 // Initial seed data
 const initialUsers: User[] = [
@@ -21,7 +21,7 @@ const initialUsers: User[] = [
     password: "demo123",
     role: "visitor",
   },
-]
+];
 
 const initialPlaces: Place[] = [
   {
@@ -34,14 +34,14 @@ const initialPlaces: Place[] = [
     latitude: 40.7128,
     longitude: -74.006,
     uploaderId: "1",
-    packages: [], // Restaurants use direct booking with check-in time and table number
     reviews: [
       {
         id: "r1",
         userId: "1",
         userName: "DemoUser",
         rating: 5,
-        comment: "Amazing pasta and excellent service! Highly recommend the carbonara.",
+        comment:
+          "Amazing pasta and excellent service! Highly recommend the carbonara.",
         date: Date.now() - 86400000,
       },
     ],
@@ -57,7 +57,6 @@ const initialPlaces: Place[] = [
     latitude: 40.7829,
     longitude: -73.9654,
     uploaderId: "1",
-    packages: [], // Visitable places cannot be booked
     reviews: [
       {
         id: "r2",
@@ -73,26 +72,26 @@ const initialPlaces: Place[] = [
   {
     id: "3",
     name: "Modern Art Museum",
-    description: "Contemporary art museum featuring rotating exhibitions from local and international artists.",
+    description:
+      "Contemporary art museum featuring rotating exhibitions from local and international artists.",
     category: "Visitable Place",
     address: "789 Culture Boulevard",
     latitude: 40.7614,
     longitude: -73.9776,
     uploaderId: "1",
-    packages: [], // Visitable places cannot be booked
     reviews: [],
     uploadedAt: Date.now() - 259200000,
   },
   {
     id: "4",
     name: "Brew & Bean Cafe",
-    description: "Artisan coffee shop with freshly baked pastries and a cozy atmosphere. Perfect for remote work.",
+    description:
+      "Artisan coffee shop with freshly baked pastries and a cozy atmosphere. Perfect for remote work.",
     category: "Cafe",
     address: "321 Coffee Lane",
     latitude: 40.7489,
     longitude: -73.968,
     uploaderId: "1",
-    packages: [],
     reviews: [
       {
         id: "r3",
@@ -115,26 +114,6 @@ const initialPlaces: Place[] = [
     latitude: 40.7589,
     longitude: -73.9851,
     uploaderId: "1",
-    packages: [
-      {
-        id: "pkg1",
-        name: "Weekend Hiking Adventure",
-        description: "2-day guided hiking tour with camping equipment included",
-        price: 150,
-        duration: 2880, // 2 days in minutes
-        availableSlots: 20,
-        joinDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 7 days from now
-      },
-      {
-        id: "pkg2",
-        name: "Sunrise Peak Climb",
-        description: "Early morning climb to the peak with breakfast at summit",
-        price: 75,
-        duration: 240, // 4 hours
-        availableSlots: 15,
-        joinDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 3 days from now
-      },
-    ],
     reviews: [],
     uploadedAt: Date.now() - 86400000,
   },
@@ -148,15 +127,12 @@ const initialPlaces: Place[] = [
     latitude: 40.7505,
     longitude: -73.9934,
     uploaderId: "1",
-    packages: [
-      {
-        id: "pkg3",
-        name: "Deluxe Suite Package",
-        description: "2-night stay in deluxe suite with breakfast and spa access",
-        price: 450,
-        duration: 2880, // 2 days
-        availableSlots: 10,
-      },
+    rooms: [
+      { id: "room_a", name: "Room A", isAvailable: true },
+      { id: "room_b", name: "Room B", isAvailable: true },
+      { id: "room_c", name: "Room C", isAvailable: true },
+      { id: "room_d", name: "Room D", isAvailable: true },
+      { id: "room_e", name: "Room E", isAvailable: false },
     ],
     reviews: [
       {
@@ -180,174 +156,166 @@ const initialPlaces: Place[] = [
     latitude: 41.0128,
     longitude: -74.1234,
     uploaderId: "1",
-    packages: [
-      {
-        id: "pkg4",
-        name: "Full Day Summit Challenge",
-        description: "Complete day hike to the summit with lunch and professional photography session",
-        price: 120,
-        duration: 480, // 8 hours
-        availableSlots: 12,
-        joinDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 5 days from now
-      },
-      {
-        id: "pkg5",
-        name: "3-Day Mountain Expedition",
-        description: "Multi-day adventure with camping, meals, and all equipment provided. Includes sunrise viewing and stargazing sessions.",
-        price: 350,
-        duration: 4320, // 3 days
-        availableSlots: 8,
-        joinDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 10 days from now
-      },
-      {
-        id: "pkg6",
-        name: "Beginner Friendly Half-Day",
-        description: "Gentle 4-hour hike perfect for beginners. Includes guide, snacks, and basic equipment rental.",
-        price: 60,
-        duration: 240, // 4 hours
-        availableSlots: 25,
-        joinDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 2 days from now
-      },
-    ],
     reviews: [
       {
         id: "r5",
         userId: "2",
         userName: "VisitorDemo",
         rating: 5,
-        comment: "Amazing experience! The views were absolutely breathtaking. The guides were knowledgeable and friendly.",
+        comment:
+          "Amazing experience! The views were absolutely breathtaking. The guides were knowledgeable and friendly.",
         date: Date.now() - 345600000,
       },
     ],
     uploadedAt: Date.now() - 345600000,
   },
-]
+];
 
 // Initialize localStorage with seed data if empty
 export function initializeStorage() {
-  if (typeof window === "undefined") return
+  if (typeof window === "undefined") return;
 
   if (!localStorage.getItem(USERS_KEY)) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(initialUsers))
+    localStorage.setItem(USERS_KEY, JSON.stringify(initialUsers));
   }
 
   // Initialize places - merge with existing to ensure all seed places are present
-  const existingPlaces = getPlaces()
-  const existingPlaceIds = new Set(existingPlaces.map((p) => p.id))
-  
+  const existingPlaces = getPlaces();
+  const existingPlaceIds = new Set(existingPlaces.map((p) => p.id));
+
   // Add any missing seed places
-  const missingPlaces = initialPlaces.filter((place) => !existingPlaceIds.has(place.id))
-  
+  const missingPlaces = initialPlaces.filter(
+    (place) => !existingPlaceIds.has(place.id)
+  );
+
+  // Update existing hotel places to include rooms if they don't have them
+  const updatedExistingPlaces = existingPlaces.map((place) => {
+    if (
+      place.category === "Hotel" &&
+      (!place.rooms || place.rooms.length === 0)
+    ) {
+      // Find the corresponding seed place to get its rooms
+      const seedPlace = initialPlaces.find((p) => p.id === place.id);
+      if (seedPlace && seedPlace.rooms) {
+        return { ...place, rooms: seedPlace.rooms };
+      }
+    }
+    return place;
+  });
+
   if (missingPlaces.length > 0) {
-    const updatedPlaces = [...existingPlaces, ...missingPlaces]
-    savePlaces(updatedPlaces)
+    const updatedPlaces = [...updatedExistingPlaces, ...missingPlaces];
+    savePlaces(updatedPlaces);
   } else if (existingPlaces.length === 0) {
     // If no places exist at all, initialize with seed data
-    savePlaces(initialPlaces)
+    savePlaces(initialPlaces);
+  } else {
+    // Update existing places with rooms if needed
+    savePlaces(updatedExistingPlaces);
   }
 
   if (!localStorage.getItem(BOOKINGS_KEY)) {
-    localStorage.setItem(BOOKINGS_KEY, JSON.stringify([]))
+    localStorage.setItem(BOOKINGS_KEY, JSON.stringify([]));
   }
 }
 
 // Users
 export function getUsers(): User[] {
-  if (typeof window === "undefined") return []
-  const data = localStorage.getItem(USERS_KEY)
-  return data ? JSON.parse(data) : []
+  if (typeof window === "undefined") return [];
+  const data = localStorage.getItem(USERS_KEY);
+  return data ? JSON.parse(data) : [];
 }
 
 export function saveUsers(users: User[]) {
-  if (typeof window === "undefined") return
-  localStorage.setItem(USERS_KEY, JSON.stringify(users))
+  if (typeof window === "undefined") return;
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
 export function addUser(user: User) {
-  const users = getUsers()
-  users.push(user)
-  saveUsers(users)
+  const users = getUsers();
+  users.push(user);
+  saveUsers(users);
 }
 
 // Places
 export function getPlaces(): Place[] {
-  if (typeof window === "undefined") return []
-  const data = localStorage.getItem(PLACES_KEY)
-  return data ? JSON.parse(data) : []
+  if (typeof window === "undefined") return [];
+  const data = localStorage.getItem(PLACES_KEY);
+  return data ? JSON.parse(data) : [];
 }
 
 export function savePlaces(places: Place[]) {
-  if (typeof window === "undefined") return
-  localStorage.setItem(PLACES_KEY, JSON.stringify(places))
+  if (typeof window === "undefined") return;
+  localStorage.setItem(PLACES_KEY, JSON.stringify(places));
 }
 
 export function addPlace(place: Place) {
-  const places = getPlaces()
-  places.push(place)
-  savePlaces(places)
+  const places = getPlaces();
+  places.push(place);
+  savePlaces(places);
 }
 
 export function getPlaceById(id: string): Place | undefined {
-  const places = getPlaces()
-  return places.find((place) => place.id === id)
+  const places = getPlaces();
+  return places.find((place) => place.id === id);
 }
 
 export function updatePlace(updatedPlace: Place) {
-  const places = getPlaces()
-  const index = places.findIndex((place) => place.id === updatedPlace.id)
+  const places = getPlaces();
+  const index = places.findIndex((place) => place.id === updatedPlace.id);
   if (index !== -1) {
-    places[index] = updatedPlace
-    savePlaces(places)
+    places[index] = updatedPlace;
+    savePlaces(places);
   }
 }
 
 // Current User
 export function getCurrentUser(): User | null {
-  if (typeof window === "undefined") return null
-  const data = localStorage.getItem(CURRENT_USER_KEY)
-  return data ? JSON.parse(data) : null
+  if (typeof window === "undefined") return null;
+  const data = localStorage.getItem(CURRENT_USER_KEY);
+  return data ? JSON.parse(data) : null;
 }
 
 export function setCurrentUser(user: User | null) {
-  if (typeof window === "undefined") return
+  if (typeof window === "undefined") return;
   if (user) {
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user))
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
   } else {
-    localStorage.removeItem(CURRENT_USER_KEY)
+    localStorage.removeItem(CURRENT_USER_KEY);
   }
 }
 
 // Bookings
 export function getBookings(): Booking[] {
-  if (typeof window === "undefined") return []
-  const data = localStorage.getItem(BOOKINGS_KEY)
-  return data ? JSON.parse(data) : []
+  if (typeof window === "undefined") return [];
+  const data = localStorage.getItem(BOOKINGS_KEY);
+  return data ? JSON.parse(data) : [];
 }
 
 export function saveBookings(bookings: Booking[]) {
-  if (typeof window === "undefined") return
-  localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings))
+  if (typeof window === "undefined") return;
+  localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings));
 }
 
 export function addBooking(booking: Booking) {
-  const bookings = getBookings()
-  bookings.push(booking)
-  saveBookings(bookings)
+  const bookings = getBookings();
+  bookings.push(booking);
+  saveBookings(bookings);
 }
 
 export function getBookingsByVisitor(visitorId: string): Booking[] {
-  return getBookings().filter((b) => b.visitorId === visitorId)
+  return getBookings().filter((b) => b.visitorId === visitorId);
 }
 
 export function getBookingsByPromoter(promoterId: string): Booking[] {
-  return getBookings().filter((b) => b.promoterId === promoterId)
+  return getBookings().filter((b) => b.promoterId === promoterId);
 }
 
 export function updateBooking(updatedBooking: Booking) {
-  const bookings = getBookings()
-  const index = bookings.findIndex((b) => b.id === updatedBooking.id)
+  const bookings = getBookings();
+  const index = bookings.findIndex((b) => b.id === updatedBooking.id);
   if (index !== -1) {
-    bookings[index] = updatedBooking
-    saveBookings(bookings)
+    bookings[index] = updatedBooking;
+    saveBookings(bookings);
   }
 }
