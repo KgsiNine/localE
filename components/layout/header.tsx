@@ -29,14 +29,16 @@ export function Header() {
               >
                 Search
               </Link>
-              <Link
-                href="/add"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  pathname === "/add" ? "text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                Add Place
-              </Link>
+              {currentUser?.role === "promoter" && (
+                <Link
+                  href="/add"
+                  className={`text-sm font-medium transition-colors hover:text-primary ${
+                    pathname === "/add" ? "text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  Add Place
+                </Link>
+              )}
               {currentUser && (
                 <Link
                   href="/bookings"

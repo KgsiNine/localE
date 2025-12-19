@@ -1,26 +1,39 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, Plus, X, Image as ImageIcon } from "lucide-react"
-import { addPlace } from "@/lib/storage"
-import type { Place, BookingPackage } from "@/lib/types"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, Plus, X, Image as ImageIcon } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { addPlace } from "@/lib/storage";
+import type { Place, HotelRoom } from "@/lib/types";
 
 interface PlaceFormProps {
-  userId: string
+  userId: string;
 }
 
 export function PlaceForm({ userId }: PlaceFormProps) {
-  const router = useRouter()
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -29,114 +42,61 @@ export function PlaceForm({ userId }: PlaceFormProps) {
     latitude: "",
     longitude: "",
     image: "",
-  })
-  const [packages, setPackages] = useState<BookingPackage[]>([])
-  const [showPackageForm, setShowPackageForm] = useState(false)
-  const [packageForm, setPackageForm] = useState({
-    name: "",
-    description: "",
-    price: "",
-    duration: "",
-    availableSlots: "",
-    joinDate: "",
-  })
-  const [error, setError] = useState("")
-  const [imagePreview, setImagePreview] = useState<string>("")
+  });
+  const [rooms, setRooms] = useState<HotelRoom[]>([]);
+  const [newRoomName, setNewRoomName] = useState("");
+  const [error, setError] = useState("");
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        setError("Image size must be less than 5MB")
-        return
+        setError("Image size must be less than 5MB");
+        return;
       }
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = reader.result as string
-        setFormData({ ...formData, image: base64String })
-        setImagePreview(base64String)
-      }
-      reader.readAsDataURL(file)
+        const base64String = reader.result as string;
+        setFormData({ ...formData, image: base64String });
+        setImagePreview(base64String);
+      };
+      reader.readAsDataURL(file);
     }
-  }
-
-  const handleAddPackage = () => {
-    if (!packageForm.name || !packageForm.price || !packageForm.duration || !packageForm.availableSlots) {
-      setError("Please fill in all package fields")
-      return
-    }
-
-    // For mountain packages, joinDate is required
-    if (formData.category === "Mountain" && !packageForm.joinDate) {
-      setError("Join date is required for mountain packages")
-      return
-    }
-
-    const price = Number.parseFloat(packageForm.price)
-    const duration = Number.parseInt(packageForm.duration)
-    const slots = Number.parseInt(packageForm.availableSlots)
-
-    if (isNaN(price) || price <= 0) {
-      setError("Price must be a positive number")
-      return
-    }
-
-    if (isNaN(duration) || duration <= 0) {
-      setError("Duration must be a positive number")
-      return
-    }
-
-    if (isNaN(slots) || slots <= 0) {
-      setError("Available slots must be a positive number")
-      return
-    }
-
-    const newPackage: BookingPackage = {
-      id: `pkg_${Date.now()}`,
-      name: packageForm.name,
-      description: packageForm.description,
-      price,
-      duration,
-      availableSlots: slots,
-      ...(formData.category === "Mountain" && packageForm.joinDate ? { joinDate: packageForm.joinDate } : {}),
-    }
-
-    setPackages([...packages, newPackage])
-    setPackageForm({ name: "", description: "", price: "", duration: "", availableSlots: "", joinDate: "" })
-    setShowPackageForm(false)
-    setError("")
-  }
-
-  const handleRemovePackage = (packageId: string) => {
-    setPackages(packages.filter((pkg) => pkg.id !== packageId))
-  }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
 
     // Validation
-    if (!formData.name || !formData.description || !formData.address || !formData.latitude || !formData.longitude) {
-      setError("Please fill in all fields")
-      return
+    if (
+      !formData.name ||
+      !formData.description ||
+      !formData.address ||
+      !formData.latitude ||
+      !formData.longitude
+    ) {
+      setError("Please fill in all fields");
+      return;
     }
 
-    const lat = Number.parseFloat(formData.latitude)
-    const lng = Number.parseFloat(formData.longitude)
+    const lat = Number.parseFloat(formData.latitude);
+    const lng = Number.parseFloat(formData.longitude);
 
     if (isNaN(lat) || isNaN(lng)) {
-      setError("Latitude and longitude must be valid numbers")
-      return
+      setError("Latitude and longitude must be valid numbers");
+      return;
     }
 
     if (lat < -90 || lat > 90) {
-      setError("Latitude must be between -90 and 90")
-      return
+      setError("Latitude must be between -90 and 90");
+      return;
     }
 
     if (lng < -180 || lng > 180) {
-      setError("Longitude must be between -180 and 180")
-      return
+      setError("Longitude must be between -180 and 180");
+      return;
     }
 
     const newPlace: Place = {
@@ -150,19 +110,21 @@ export function PlaceForm({ userId }: PlaceFormProps) {
       uploaderId: userId,
       image: formData.image || undefined,
       reviews: [],
-      packages,
       uploadedAt: Date.now(),
-    }
+      ...(formData.category === "Hotel" && rooms.length > 0 ? { rooms } : {}),
+    };
 
-    addPlace(newPlace)
-    router.push("/")
-  }
+    addPlace(newPlace);
+    router.push("/");
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Add a New Place</CardTitle>
-        <CardDescription>Share a great location with the community</CardDescription>
+        <CardDescription>
+          Share a great location with the community
+        </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -180,7 +142,9 @@ export function PlaceForm({ userId }: PlaceFormProps) {
               type="text"
               placeholder="e.g., The Golden Fork"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
             />
           </div>
 
@@ -189,10 +153,11 @@ export function PlaceForm({ userId }: PlaceFormProps) {
             <Select
               value={formData.category}
               onValueChange={(value) => {
-                setFormData({ ...formData, category: value as Place["category"] })
-                // Reset packages when category changes to avoid confusion
-                if (value !== formData.category) {
-                  setPackages([])
+                const newCategory = value as Place["category"];
+                setFormData({ ...formData, category: newCategory });
+                // Reset rooms when category changes
+                if (newCategory !== "Hotel") {
+                  setRooms([]);
                 }
               }}
             >
@@ -221,15 +186,19 @@ export function PlaceForm({ userId }: PlaceFormProps) {
               />
               {imagePreview && (
                 <div className="relative w-full h-48 rounded-lg overflow-hidden border border-border">
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
                   <Button
                     type="button"
                     variant="destructive"
                     size="sm"
                     className="absolute top-2 right-2"
                     onClick={() => {
-                      setImagePreview("")
-                      setFormData({ ...formData, image: "" })
+                      setImagePreview("");
+                      setFormData({ ...formData, image: "" });
                     }}
                   >
                     <X className="h-4 w-4" />
@@ -254,7 +223,9 @@ export function PlaceForm({ userId }: PlaceFormProps) {
               placeholder="Describe this place..."
               rows={4}
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
             />
           </div>
 
@@ -265,7 +236,9 @@ export function PlaceForm({ userId }: PlaceFormProps) {
               type="text"
               placeholder="e.g., 123 Main Street, Downtown"
               value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, address: e.target.value })
+              }
             />
           </div>
 
@@ -277,7 +250,9 @@ export function PlaceForm({ userId }: PlaceFormProps) {
                 type="text"
                 placeholder="e.g., 40.7128"
                 value={formData.latitude}
-                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, latitude: e.target.value })
+                }
               />
             </div>
 
@@ -288,159 +263,130 @@ export function PlaceForm({ userId }: PlaceFormProps) {
                 type="text"
                 placeholder="e.g., -74.0060"
                 value={formData.longitude}
-                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, longitude: e.target.value })
+                }
               />
             </div>
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Booking Packages (Optional)</Label>
-                <p className="text-sm text-muted-foreground">Add packages visitors can book</p>
+          {/* Rooms management for Hotel category */}
+          {formData.category === "Hotel" && (
+            <div className="space-y-4 pt-4 border-t border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Hotel Rooms *</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Add and manage rooms for your hotel
+                  </p>
+                </div>
               </div>
-              {!showPackageForm && (
-                <Button type="button" variant="outline" size="sm" onClick={() => setShowPackageForm(true)}>
+
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g., Room A"
+                  value={newRoomName}
+                  onChange={(e) => setNewRoomName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (newRoomName.trim()) {
+                        const newRoom: HotelRoom = {
+                          id: `room_${Date.now()}`,
+                          name: newRoomName.trim(),
+                          isAvailable: true,
+                        };
+                        setRooms([...rooms, newRoom]);
+                        setNewRoomName("");
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (newRoomName.trim()) {
+                      const newRoom: HotelRoom = {
+                        id: `room_${Date.now()}`,
+                        name: newRoomName.trim(),
+                        isAvailable: true,
+                      };
+                      setRooms([...rooms, newRoom]);
+                      setNewRoomName("");
+                    }
+                  }}
+                >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Package
+                  Add Room
                 </Button>
-              )}
-            </div>
+              </div>
 
-            {showPackageForm && (
-              <Card className="bg-muted/50">
-                <CardContent className="pt-6 space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="pkg-name">Package Name *</Label>
-                    <Input
-                      id="pkg-name"
-                      placeholder="e.g., Dinner for Two"
-                      value={packageForm.name}
-                      onChange={(e) => setPackageForm({ ...packageForm, name: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="pkg-desc">Description</Label>
-                    <Textarea
-                      id="pkg-desc"
-                      placeholder="Describe this package..."
-                      rows={2}
-                      value={packageForm.description}
-                      onChange={(e) => setPackageForm({ ...packageForm, description: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="pkg-price">Price ($) *</Label>
-                      <Input
-                        id="pkg-price"
-                        type="number"
-                        placeholder="50"
-                        value={packageForm.price}
-                        onChange={(e) => setPackageForm({ ...packageForm, price: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="pkg-duration">Duration (min) *</Label>
-                      <Input
-                        id="pkg-duration"
-                        type="number"
-                        placeholder="90"
-                        value={packageForm.duration}
-                        onChange={(e) => setPackageForm({ ...packageForm, duration: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="pkg-slots">Available Slots *</Label>
-                      <Input
-                        id="pkg-slots"
-                        type="number"
-                        placeholder="10"
-                        value={packageForm.availableSlots}
-                        onChange={(e) => setPackageForm({ ...packageForm, availableSlots: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  {formData.category === "Mountain" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="pkg-join-date">Join Date *</Label>
-                      <Input
-                        id="pkg-join-date"
-                        type="date"
-                        value={packageForm.joinDate}
-                        onChange={(e) => setPackageForm({ ...packageForm, joinDate: e.target.value })}
-                        min={new Date().toISOString().split("T")[0]}
-                      />
-                      <p className="text-xs text-muted-foreground">Date when visitors can join this package</p>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    <Button type="button" onClick={handleAddPackage} size="sm">
-                      Add Package
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setShowPackageForm(false)
-                        setPackageForm({ name: "", description: "", price: "", duration: "", availableSlots: "", joinDate: "" })
-                      }}
+              {rooms.length > 0 && (
+                <div className="space-y-2 border border-border rounded-lg p-4">
+                  {rooms.map((room) => (
+                    <div
+                      key={room.id}
+                      className="flex items-center justify-between"
                     >
-                      Cancel
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {packages?.length > 0 && (
-              <div className="space-y-2">
-                {packages.map((pkg) => (
-                  <Card key={pkg.id}>
-                    <CardContent className="flex items-center justify-between p-4">
-                      <div className="flex-1">
-                        <h4 className="font-medium">{pkg.name}</h4>
-                        <p className="text-sm text-muted-foreground">{pkg.description}</p>
-                        <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                          <span>${pkg.price}</span>
-                          <span>{pkg.duration} min</span>
-                          <span>{pkg.availableSlots} slots</span>
-                          {pkg.joinDate && <span>Join: {new Date(pkg.joinDate).toLocaleDateString()}</span>}
-                        </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`room-${room.id}`}
+                          checked={room.isAvailable}
+                          onCheckedChange={(checked) => {
+                            setRooms(
+                              rooms.map((r) =>
+                                r.id === room.id
+                                  ? { ...r, isAvailable: checked === true }
+                                  : r
+                              )
+                            );
+                          }}
+                        />
+                        <Label
+                          htmlFor={`room-${room.id}`}
+                          className={`text-sm font-normal cursor-pointer ${
+                            !room.isAvailable
+                              ? "text-muted-foreground line-through"
+                              : ""
+                          }`}
+                        >
+                          {room.name}
+                        </Label>
                       </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemovePackage(pkg.id)}
-                        className="shrink-0"
+                        onClick={() => {
+                          setRooms(rooms.filter((r) => r.id !== room.id));
+                        }}
                       >
                         <X className="h-4 w-4" />
                       </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-3 pt-4">
             <Button type="submit" className="flex-1">
               Add Place
             </Button>
-            <Button type="button" variant="outline" onClick={() => router.push("/")} className="flex-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/")}
+              className="flex-1"
+            >
               Cancel
             </Button>
           </div>
         </CardContent>
       </form>
     </Card>
-  )
+  );
 }

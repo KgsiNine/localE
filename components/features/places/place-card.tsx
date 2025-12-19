@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import type { Place } from "@/lib/types"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -5,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Star, MapPin, Image as ImageIcon } from "lucide-react"
 import Image from "next/image"
+import { useAuth } from "@/hooks/use-auth"
 
 interface PlaceCardProps {
   place: Place
@@ -17,6 +20,7 @@ function calculateAverageRating(place: Place): number {
 }
 
 export function PlaceCard({ place }: PlaceCardProps) {
+  const { currentUser } = useAuth()
   const averageRating = calculateAverageRating(place)
 
   return (
@@ -77,7 +81,7 @@ export function PlaceCard({ place }: PlaceCardProps) {
           </div>
 
           <div className="flex gap-2">
-            {place.category !== "Visitable Place" && (
+            {place.category !== "Visitable Place" && currentUser?.role === "visitor" && (
               <Button asChild size="sm">
                 <Link href={`/book/${place.id}`}>Book Now</Link>
               </Button>

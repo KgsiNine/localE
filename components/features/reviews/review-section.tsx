@@ -48,12 +48,21 @@ export function ReviewSection({ place, onReviewAdded }: ReviewSectionProps) {
 
       <div>
         {currentUser ? (
-          <ReviewForm
-            userId={currentUser.id}
-            userName={currentUser.username}
-            onSubmit={handleReviewSubmit}
-            isSubmitting={isSubmitting}
-          />
+          currentUser.role === "promoter" ? (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Promoters cannot write reviews. Only visitors can review places.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <ReviewForm
+              userId={currentUser.id}
+              userName={currentUser.username}
+              onSubmit={handleReviewSubmit}
+              isSubmitting={isSubmitting}
+            />
+          )
         ) : (
           <Alert>
             <AlertCircle className="h-4 w-4" />
